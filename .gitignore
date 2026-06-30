@@ -1,0 +1,14 @@
+# Temporary files
+gen_icons.py
+generate_icon.py
+resize_icon.py
+*.pyc
+__pycache__/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/

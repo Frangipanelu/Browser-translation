@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>单词本 - 划词翻译助手</title>
+<link rel="stylesheet" href="wordbook.css">
+</head>
+<body>
+  <div class="wb-container">
+    <!-- 侧边栏 -->
+    <aside class="wb-sidebar" id="wb-sidebar">
+      <div class="wb-logo">
+        <span>🔤</span>
+        <span class="wb-logo-text">划词翻译</span>
+      </div>
+      <nav class="wb-nav">
+        <a class="wb-nav-item active" data-tab="words" id="wb-nav-words">📖 单词本</a>
+        <a class="wb-nav-item" data-tab="settings" id="wb-nav-settings">⚙ 设置</a>
+      </nav>
+      <div class="wb-sidebar-footer">
+        <span class="wb-version">v1.0.0</span>
+      </div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="wb-main">
+      <!-- 单词本面板 -->
+      <div class="wb-panel active" id="wb-panel-words">
+        <div class="wb-toolbar">
+          <div class="wb-search-wrap">
+            <input type="text" class="wb-search" id="wb-search" placeholder="搜索单词..." />
+          </div>
+          <div class="wb-filter-wrap">
+            <select class="wb-select" id="wb-tag-filter">
+              <option value="">全部标签</option>
+            </select>
+          </div>
+          <div class="wb-toolbar-actions">
+            <button class="wb-btn wb-btn-export" id="wb-export-obsidian" title="导出到 Obsidian">📑</button>
+            <button class="wb-btn wb-btn-export" id="wb-export-file" title="下载 Markdown">📥</button>
+          </div>
+        </div>
+
+        <div class="wb-stats" id="wb-stats">
+          共 <strong id="wb-total">0</strong> 个单词
+        </div>
+
+        <div class="wb-list" id="wb-list">
+          <div class="wb-empty">
+            <span class="wb-empty-icon">📭</span>
+            <p>单词本还是空的</p>
+            <p class="wb-empty-hint">浏览网页时选中文字，点击翻译气泡中的 ⭐ 即可收藏</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 设置面板 -->
+      <div class="wb-panel" id="wb-panel-settings">
+        <h2 class="wb-section-title">翻译设置</h2>
+        <div class="wb-form">
+          <label class="wb-label">翻译引擎</label>
+          <select class="wb-select wb-select-full" id="wb-set-engine">
+            <option value="google">Google 翻译（免费，推荐）</option>
+            <option value="deepl">DeepL 免费版</option>
+          </select>
+
+          <label class="wb-label" id="wb-deepl-key-label" style="display:none">DeepL API Key</label>
+          <input type="text" class="wb-input" id="wb-set-deepl-key" placeholder="DeepL API Key（免费注册可得）" style="display:none" />
+
+          <h2 class="wb-section-title">Obsidian 导出</h2>
+          <label class="wb-label">Obsidian 仓库名 ⚠️</label>
+          <input type="text" class="wb-input" id="wb-set-vault" placeholder="填写左侧边栏显示的名称，如 Knowledge" />
+          <span class="wb-hint wb-hint-warn">❗ 填<strong>仓库名称</strong>（Obsidian 左侧显示的文字），<strong>不是</strong>文件夹路径！例如填 "Knowledge"，不要填 "D:\obsidian\..."</span>
+
+          <label class="wb-label">同步模式</label>
+          <select class="wb-select wb-select-full" id="wb-set-mode">
+            <option value="adv-uri">🔄 增量同步（需安装 Advanced URI 插件）</option>
+            <option value="new">📄 每次导出新文件</option>
+          </select>
+          <span class="wb-hint" id="wb-hint-mode">
+            📦 请先在 Obsidian 社区插件市场安装 <strong>Advanced URI</strong>（obsidian://show-plugin?id=obsidian-advanced-uri），然后刷新此页面。
+          </span>
+
+          <span class="wb-hint wb-hint-sync">
+            💡 <strong>同步方式</strong>：关闭单词本页面时，如有新增/修改，将弹窗询问是否一次性同步到 Obsidian。也可随时点击顶部 📑 按钮手动导出。
+          </span>
+        </div>
+
+        <div class="wb-form-actions">
+          <button class="wb-btn wb-btn-primary" id="wb-save-settings">保存设置</button>
+          <span class="wb-saved-msg" id="wb-saved-msg" style="display:none">✅ 已保存</span>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="wb-toast" class="wb-toast" style="display:none"></div>
+
+  <script src="wordbook.js"></script>
+</body>
+</html>
