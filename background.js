@@ -143,10 +143,18 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 
   if (msg.action === 'get-settings') {
     chrome.storage.local.get([SETTINGS_KEY, CONFIGURED_KEY])
-      .then((data) => sendResponse({
-        settings: data[SETTINGS_KEY] || getDefaultSettings(),
-        configured: data[CONFIGURED_KEY] || false
-      }));
+      .then((data) => {
+        const settings = data[SETTINGS_KEY] || getDefaultSettings();
+        // 升级兼容：旧默认端口 27123 在无显式配置时回退到 27124
+        // （Local REST API 常见只开 HTTPS 27124，纯 HTTP 27123 不可达）
+        if (settings.obsidianPort === '27123' || !settings.obsidianPort) {
+          settings.obsidianPort = '27124';
+        }
+        sendResponse({
+          settings,
+          configured: data[CONFIGURED_KEY] || false
+        });
+      });
     return true;
   }
 });
@@ -237,7 +245,7 @@ function getDefaultSettings() {
     obsidianMechanism: 'adv-uri', // 'rest' | 'adv-uri' | 'file'
     obsidianFolder: 'Glossary',
     obsidianApiKey: '',
-    obsidianPort: '27123'
+    obsidianPort: '27124'
   };
 }
 
@@ -384,32 +392,63 @@ async function exportToObsidian(vault) {
   };
 }
 
+// 解析 Local REST API 可用 base：自动覆盖 https/http 协议，以及两个默认端口
+// （HTTPS 27124 与 HTTP 27123 是不同端口，需分别尝试）。结果缓存 30s。
+let cachedObsidianBase = null;
+let cachedObsidianBaseAt = 0;
+
+function candidateObsidianBases(stg) {
+  const port = stg.obsidianPort || '27124';
+  const bases = [
+    `https://127.0.0.1:${port}`,
+    `http://127.0.0.1:${port}`,
+  ];
+  // Local REST API 的两个默认端口（HTTP=27123 / HTTPS=27124）可能不同，补齐尝试
+  if (port !== '27123') bases.push('http://127.0.0.1:27123');
+  if (port !== '27124') bases.push('https://127.0.0.1:27124');
+  return bases;
+}
+
+async function resolveObsidianBase(stg) {
+  const now = Date.now();
+  if (cachedObsidianBase && now - cachedObsidianBaseAt < 30000) return cachedObsidianBase;
+  const headers = {};
+  if (stg.obsidianApiKey) headers['Authorization'] = `Bearer ${stg.obsidianApiKey}`;
+  for (const base of candidateObsidianBases(stg)) {
+    try {
+      const resp = await fetch(base, { headers, signal: AbortSignal.timeout(3000) });
+      // 207=已授权；401/403=服务在跑但需要鉴权（同样算可达，写入时会带 Key）
+      if (resp.ok || resp.status === 207 || resp.status === 401 || resp.status === 403) {
+        cachedObsidianBase = base;
+        cachedObsidianBaseAt = now;
+        return base;
+      }
+    } catch (e) {
+      // 该 base 不可达，尝试下一个
+    }
+  }
+  cachedObsidianBase = null;
+  return null;
+}
+
 // 探测 Obsidian 是否就绪（同步前的友好提示 + 决定是否走文件兜底）
 async function checkObsidianReachable() {
   const data = await chrome.storage.local.get(SETTINGS_KEY);
   const stg = data[SETTINGS_KEY] || getDefaultSettings();
   const mechanism = stg.obsidianMechanism || 'adv-uri';
   if (mechanism === 'rest') {
-    const base = `http://127.0.0.1:${stg.obsidianPort || '27123'}`;
-    const headers = {};
-    if (stg.obsidianApiKey) headers['Authorization'] = `Bearer ${stg.obsidianApiKey}`;
-    try {
-      const resp = await fetch(base, { headers, signal: AbortSignal.timeout(3000) });
-      // 207=已授权；401/403=服务在跑但需要鉴权（同样算可达，写入时会带 Key）
-      const reachable = resp.ok || resp.status === 207 || resp.status === 401 || resp.status === 403;
+    const base = await resolveObsidianBase(stg);
+    if (base) {
       return {
-        reachable,
+        reachable: true,
         mechanism,
-        detail: reachable
-          ? (stg.obsidianApiKey ? 'Local REST API 可访问（已带鉴权）' : 'Local REST API 可访问')
-          : 'Local REST API 返回异常状态码'
+        proto: base.split('://')[0],
+        detail: `${base} 可访问${stg.obsidianApiKey ? '（已带鉴权）' : ''}`
       };
-    } catch (e) {
-      return { reachable: false, mechanism, detail: 'Local REST API 不可达：Obsidian 未运行，或未装 Local REST API 插件，或端口不对' };
     }
+    return { reachable: false, mechanism, detail: 'Local REST API 不可达：Obsidian 未运行，或未装 Local REST API 插件，或端口不对' };
   }
-  // adv-uri / file：浏览器无法可靠探测 obsidian:// 协议是否可用
-  return { reachable: null, mechanism, detail: '无法自动探测 obsidian:// Advanced URI 是否可用，请确保 Obsidian 已运行且已安装 Advanced URI 插件' };
+  return { reachable: 'unknown', mechanism, detail: 'adv-uri / file 模式不探测连接状态' };
 }
 
 // 通过 obsidian:// 协议写入笔记 — 支持大内容分块
@@ -481,9 +520,8 @@ async function exportToFile() {
 // 每条术语写入独立文件，便于 Dataview 动态查询 / 分组
 
 // Local REST API：PUT 写文件（最稳，无 URL 长度限制）
-async function writeViaRest(filepath, content, apiKey, port) {
+async function writeViaRest(filepath, content, apiKey, base) {
   try {
-    const base = `http://127.0.0.1:${port || '27123'}`;
     const url = `${base}/vault/${encodeURIComponent(filepath)}`;
     const headers = { 'Content-Type': 'text/markdown' };
     if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
@@ -508,16 +546,18 @@ async function saveGlossaryTerm(term) {
   const vault = stg.obsidianVault || '';
   const folder = stg.obsidianFolder || 'Glossary';
   const apiKey = stg.obsidianApiKey || '';
-  const port = stg.obsidianPort || '27123';
 
   const content = buildGlossaryContent(term);
   const filename = sanitizeFilename(term.original) + '.md';
   const filepath = `${folder}/${filename}`;
 
   if (mechanism === 'rest') {
-    const ok = await writeViaRest(filepath, content, apiKey, port);
-    if (ok) return { ok: true, method: 'rest', filename };
-    // rest 失败 → 降级到文件兜底
+    const base = await resolveObsidianBase(stg);
+    if (base) {
+      const ok = await writeViaRest(filepath, content, apiKey, base);
+      if (ok) return { ok: true, method: 'rest', filename };
+    }
+    // rest 不可达/写入失败 → 降级到文件兜底
     return {
       ok: false,
       fallbackFile: true,
@@ -566,13 +606,8 @@ async function glossarySaveAll() {
 
   // rest 模式且 Obsidian 不可达：直接生成合并文件兜底，避免每条 8s 超时
   if (mechanism === 'rest') {
-    let restOk = false;
-    try {
-      const base = `http://127.0.0.1:${stg.obsidianPort || '27123'}`;
-      const resp = await fetch(base, { signal: AbortSignal.timeout(3000) });
-      restOk = resp.ok || resp.status === 207;
-    } catch (e) { /* ignore */ }
-    if (!restOk) {
+    const base = await resolveObsidianBase(stg);
+    if (!base) {
       const md = words.map((w) => buildGlossaryContent(wordToGlossaryTerm(w, 'term'))).join('\n\n---\n\n');
       return {
         ok: false,
@@ -644,8 +679,8 @@ chrome.commands.onCommand.addListener((command) => {
 
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
-    console.log('[WT] 划词翻译助手已安装 v2.1.5');
+    console.log('[WT] 划词翻译助手已安装 v2.1.6');
   } else if (details.reason === 'update') {
-    console.log('[WT] 划词翻译助手已更新到 v2.1.5');
+    console.log('[WT] 划词翻译助手已更新到 v2.1.6');
   }
 });
