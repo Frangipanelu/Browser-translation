@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# scripts/commit-msg — Conventional Commits 离线校验钩子（零依赖，Git Bash 运行）
+# 用法：将本文件安装为 .git/hooks/commit-msg 并 chmod +x
+# 校验提交信息首行匹配：<type>(<scope>): <subject>
+# type ∈ feat|fix|refactor|test|docs|chore|style|perf
+
+set -euo pipefail
+
+MSG_FILE="${1:?commit-msg: 缺少提交信息文件路径}"
+[ -f "$MSG_FILE" ] || { echo "commit-msg: 找不到 $MSG_FILE" >&2; exit 1; }
+
+# 跳过 merge / revert 等 git 内部提交（首行带 Merge: / Revert "）
+first_line="$(head -n1 "$MSG_FILE" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+case "$first_line" in
+  Merge* | Revert* | "Automatic\ merge"*) exit 0 ;;
+esac
+
+TYPE_RE='^(feat|fix|refactor|test|docs|chore|style|perf)(\([a-z0-9._-]+\))?(!)?: .+'
+if ! printf '%s\n' "$first_line" | grep -Eq "$TYPE_RE"; then
+  echo "=================================================================" >&2
+  echo " ✗ 提交信息不符合 Conventional Commits 规范，已拒绝提交。" >&2
+  echo "" >&2
+  echo "   正确格式：  <type>(<scope>): <subject>" >&2
+  echo "   type ∈ feat|fix|refactor|test|docs|chore|style|perf" >&2
+  echo "" >&2
+  echo "   示例：" >&2
+  echo "     feat(glossary): 支持存为术语到 Obsidian" >&2
+  echo "     fix(translate): 修复中文→英文方向误判" >&2
+  echo "     test(translate): 覆盖 MyMemory 回退" >&2
+  echo "     docs: 补充 STANDARDS.md" >&2
+  echo "" >&2
+  echo "   你的首行：  $first_line" >&2
+  echo "=================================================================" >&2
+  exit 1
+fi
+
+echo "✓ commit-msg: 提交信息格式校验通过" >&2
+exit 0
