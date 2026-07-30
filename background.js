@@ -645,6 +645,48 @@ async function glossarySaveAll() {
     }
   }
 
+  // adv-uri 模式批量同步：合并成一个文件，只触发一次 obsidian:// 协议
+  // 避免连续打开多个临时标签页导致 Advanced URI 插件冲突、页面乱弹、写入失败
+  if (mechanism === 'adv-uri' && words.length > 1) {
+    const today = new Date().toISOString().split('T')[0];
+    const filename = `Glossary-${today}.md`;
+    const combinedMd = words.map((w) => buildGlossaryContent(wordToGlossaryTerm(w, 'term'))).join('\n\n---\n\n');
+
+    // 超长合并内容：URI 方式承载不了，直接生成合并文件兜底
+    const testUri = `obsidian://adv-uri?filepath=${encodeURIComponent(filename)}&data=${encodeURIComponent(combinedMd)}&mode=overwrite&openmode=silent`;
+    if (testUri.length > 100000) {
+      return {
+        ok: false,
+        fallbackFile: true,
+        combined: true,
+        content: combinedMd,
+        filename,
+        reason: '合并后内容超过 URI 长度限制（100KB），已生成合并文件兜底'
+      };
+    }
+
+    const r = await openObsidianUri(stg.obsidianVault || '', filename, combinedMd, 'adv-uri');
+    if (r.success) {
+      return {
+        ok: true,
+        exported: words.length,
+        failed: 0,
+        unverified: true,
+        combined: true,
+        method: 'adv-uri',
+        filename
+      };
+    }
+    return {
+      ok: false,
+      fallbackFile: true,
+      combined: true,
+      content: combinedMd,
+      filename,
+      reason: r.reason || 'adv-uri 合并写入失败，已生成文件兜底'
+    };
+  }
+
   let okCount = 0;
   let failCount = 0;
   const fallbackParts = [];
@@ -704,8 +746,8 @@ chrome.commands.onCommand.addListener((command) => {
 
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
-    console.log('[WT] 划词翻译助手已安装 v2.1.10');
+    console.log('[WT] 划词翻译助手已安装 v2.1.11');
   } else if (details.reason === 'update') {
-    console.log('[WT] 划词翻译助手已更新到 v2.1.10');
+    console.log('[WT] 划词翻译助手已更新到 v2.1.11');
   }
 });
