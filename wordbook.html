@@ -19,7 +19,7 @@
         <a class="wb-nav-item" data-tab="settings" id="wb-nav-settings">⚙ 设置</a>
       </nav>
       <div class="wb-sidebar-footer">
-        <span class="wb-version">v2.1.4</span>
+        <span class="wb-version">v2.1.5</span>
       </div>
     </aside>
 
@@ -94,10 +94,11 @@
 
           <label class="wb-label">Local REST API 端口</label>
           <input type="text" class="wb-input" id="wb-set-port" placeholder="27123" />
-          <span class="wb-hint">仅 rest 模式需要。Obsidian 装 <strong>Local REST API</strong> 插件后，默认端口 27123。</span>
+          <span class="wb-hint">仅填<strong>纯数字端口</strong>（如 27124），不要填 http:// 或完整 URL。插件默认 27123。</span>
 
           <label class="wb-label">API Key（可选）</label>
-          <input type="text" class="wb-input" id="wb-set-apikey" placeholder="若插件开启了 Authorization 则填写" />
+          <input type="text" class="wb-input" id="wb-set-apikey" placeholder="只填 token 本身，不要带 Bearer 前缀" />
+          <span class="wb-hint">仅当 Obsidian 插件开启了 Authorization 才需要：填<strong>纯 token</strong>（如 <code>5bbf…</code>），扩展会自动加 <code>Bearer</code> 前缀。若此处填了 <code>Bearer xxx</code> 会被判双重前缀而失败。</span>
         </div>
 
         <div class="wb-form-actions">

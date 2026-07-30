@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "划词翻译助手",
-  "version": "2.1.4",
+  "version": "2.1.5",
   "description": "选中即翻译（中英双向），音标+词性释义+TTS发音，多引擎备用+手动切换方向；收藏可一键沉淀为 Obsidian 专业术语表（Glossary）。",
   "icons": {
     "16": "icons/icon16.png",

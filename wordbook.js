@@ -538,9 +538,16 @@ async function saveSettings() {
   const folderEl = document.getElementById('wb-set-folder');
   if (folderEl) settings.obsidianFolder = folderEl.value.trim() || 'Glossary';
   const keyEl = document.getElementById('wb-set-apikey');
-  if (keyEl) settings.obsidianApiKey = keyEl.value.trim();
+  if (keyEl) {
+    // 防御：去掉用户误填的 "Bearer " 前缀（扩展会自动加）
+    settings.obsidianApiKey = keyEl.value.trim().replace(/^Bearer\s+/i, '');
+  }
   const portEl = document.getElementById('wb-set-port');
-  if (portEl) settings.obsidianPort = portEl.value.trim() || '27123';
+  if (portEl) {
+    // 防御：从 "http://127.0.0.1:27124/" 这类误填中提取纯数字端口
+    const m = portEl.value.trim().match(/(\d+)\s*$/);
+    settings.obsidianPort = (m ? m[1] : '') || '27123';
+  }
 
   if (settings.obsidianVault && /[\\/:]/.test(settings.obsidianVault)) {
     showToast('Obsidian 仓库名看起来像文件路径！请填写左侧边栏显示的名称（如 "Knowledge"）');

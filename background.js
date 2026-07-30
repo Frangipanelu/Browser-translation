@@ -391,9 +391,19 @@ async function checkObsidianReachable() {
   const mechanism = stg.obsidianMechanism || 'adv-uri';
   if (mechanism === 'rest') {
     const base = `http://127.0.0.1:${stg.obsidianPort || '27123'}`;
+    const headers = {};
+    if (stg.obsidianApiKey) headers['Authorization'] = `Bearer ${stg.obsidianApiKey}`;
     try {
-      const resp = await fetch(base, { signal: AbortSignal.timeout(3000) });
-      return { reachable: resp.ok || resp.status === 207, mechanism, detail: 'Local REST API 可访问' };
+      const resp = await fetch(base, { headers, signal: AbortSignal.timeout(3000) });
+      // 207=已授权；401/403=服务在跑但需要鉴权（同样算可达，写入时会带 Key）
+      const reachable = resp.ok || resp.status === 207 || resp.status === 401 || resp.status === 403;
+      return {
+        reachable,
+        mechanism,
+        detail: reachable
+          ? (stg.obsidianApiKey ? 'Local REST API 可访问（已带鉴权）' : 'Local REST API 可访问')
+          : 'Local REST API 返回异常状态码'
+      };
     } catch (e) {
       return { reachable: false, mechanism, detail: 'Local REST API 不可达：Obsidian 未运行，或未装 Local REST API 插件，或端口不对' };
     }
@@ -634,8 +644,8 @@ chrome.commands.onCommand.addListener((command) => {
 
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
-    console.log('[WT] 划词翻译助手已安装 v2.1.4');
+    console.log('[WT] 划词翻译助手已安装 v2.1.5');
   } else if (details.reason === 'update') {
-    console.log('[WT] 划词翻译助手已更新到 v2.1.4');
+    console.log('[WT] 划词翻译助手已更新到 v2.1.5');
   }
 });
