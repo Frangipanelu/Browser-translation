@@ -106,9 +106,11 @@ created: 2026-07-30
 
 ### 使用步骤
 1. Obsidian 装 **Advanced URI** 插件（推荐）并启动；
-2. 扩展设置填仓库名 + 写入方式选 `adv-uri`（默认即为它）；
+2. 扩展设置写入方式选 `adv-uri`（默认即为它）。**仓库名可留空**——留空时自动写入你当前正在打开的 Obsidian 仓库，无需手动填名字；
 3. 网页划词收藏 → 单词本里给值得留的条目选「类型」→ 点 📌 存为术语；
 4. 在 Obsidian 用 `GLOSSARY_QUERIES.md` 的模板按出处 / 类型 / 标签检索。
+
+> 注：若手动填写仓库名，请填 Obsidian 左侧边栏显示的**仓库名称**（如 `Knowledge`），**不要**填文件夹路径（如 `D:\obsidian\...`）或在 Obsidian 中改名后的旧名——否则会报 "Vault not found"。留空最稳妥。
 
 ### 查询与复用
 - 完整设计文档：`OBSIDIAN_DESIGN.md`

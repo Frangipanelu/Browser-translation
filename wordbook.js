@@ -381,8 +381,9 @@ async function exportAllGlossary() {
 
 async function exportToObsidian() {
   const vault = settings.obsidianVault || document.getElementById('wb-set-vault').value.trim();
-  if (!vault) {
-    showToast('请先在设置中填写 Obsidian 仓库名');
+  // adv-uri 模式下仓库名可选：省略时 Advanced URI 自动写入当前打开的仓库
+  if (!vault && settings.obsidianMechanism !== 'adv-uri') {
+    showToast('请先在设置中填写 Obsidian 仓库名（Advanced URI 模式可留空，自动写入当前打开的仓库）');
     switchTab('settings');
     return;
   }
@@ -599,7 +600,8 @@ function showToast(msg) {
 // --- 关闭时提示同步 ---
 function onBeforeUnload(e) {
   if (!allWords.length) return;
-  if (!settings.obsidianVault) return;
+  // adv-uri 模式无需仓库名，仓库名为空也应提示同步（rest 同样不需要仓库名）
+  if (!settings.obsidianVault && settings.obsidianMechanism !== 'adv-uri') return;
 
   // 检查是否有未同步的变更
   if (needsSync) {

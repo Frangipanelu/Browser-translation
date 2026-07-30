@@ -85,9 +85,9 @@
           <span class="wb-hint wb-hint-warn">术语表 = 你精选的"专业术语 / 地道表达"，每条写成一个独立笔记，存进仓库的 Glossary 文件夹，可用 Dataview 按出处/类型/标签查询。</span>
           <span class="wb-hint wb-hint-info">推荐用 <b>Advanced URI</b>：无需开任何本地服务，装好插件、启动 Obsidian 即可同步。若 Obsidian 未运行或插件缺失，可随时点「导出为文件」手动拖入 Glossary 文件夹，不会静默失败。</span>
 
-          <label class="wb-label">Obsidian 仓库名</label>
-          <input type="text" class="wb-input" id="wb-set-vault" placeholder="左侧边栏显示的名称，如 Knowledge（rest 模式可留空）" />
-          <span class="wb-hint wb-hint-warn">填<strong>仓库名称</strong>（Obsidian 左侧显示的文字），<strong>不是</strong>文件夹路径！例如 "Knowledge"，不要填 "D:\obsidian\..."</span>
+          <label class="wb-label">Obsidian 仓库名（可选）</label>
+          <input type="text" class="wb-input" id="wb-set-vault" placeholder="可留空 → Advanced URI 自动写入当前打开的仓库" />
+          <span class="wb-hint wb-hint-warn">选 Advanced URI 时可<strong>留空</strong>：扩展会写入你当前正在打开的仓库，无需填名字。若填了，请填<strong>仓库名称</strong>（Obsidian 左侧显示的文字，如 "Knowledge"），<strong>不是</strong>文件夹路径（如 D:\obsidian\...）。</span>
 
           <label class="wb-label">Glossary 文件夹名</label>
           <input type="text" class="wb-input" id="wb-set-folder" placeholder="Glossary" />

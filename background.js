@@ -356,15 +356,19 @@ function buildSingleFileContent(words) {
 async function exportToObsidian(vault) {
   const words = await getWordbook();
   if (!words.length) return { error: '单词本为空，没有可导出的内容' };
-  if (!vault) return { error: '请先在设置中填写 Obsidian 仓库名' };
-
-  if (/[\\/:]/.test(vault)) {
-    return { error: `你填的「${vault}」看起来像文件路径！请填写 Obsidian 左侧边栏显示的仓库名（如 "Knowledge"），不是文件夹路径。` };
-  }
 
   const data = await chrome.storage.local.get(SETTINGS_KEY);
   const stg = data[SETTINGS_KEY] || getDefaultSettings();
   const mode = stg.obsidianMode || 'adv-uri';
+
+  // adv-uri 模式下仓库名可选：省略时 Advanced URI 自动写入当前打开的仓库
+  if (!vault && mode !== 'adv-uri') {
+    return { error: '请先在设置中填写 Obsidian 仓库名（使用 Advanced URI 时可留空，会自动写入当前打开的仓库）' };
+  }
+  if (vault && /[\\/:]/.test(vault)) {
+    return { error: `你填的「${vault}」看起来像文件路径！请填写 Obsidian 左侧边栏显示的仓库名（如 "Knowledge"），不是文件夹路径。` };
+  }
+
   const today = new Date().toISOString().split('T')[0];
 
   const md = buildSingleFileContent(words);
@@ -466,7 +470,9 @@ async function openObsidianUri(vault, filename, content, mode) {
     // 方式 1：Advanced URI — mode=overwrite
     if (mode === 'adv-uri') {
       // openmode=silent 尽量不让 Obsidian 抢焦点（插件支持时生效）
-      const uri = `obsidian://adv-uri?vault=${encodedVault}&filepath=${filepath}&data=${encodedContent}&mode=overwrite&openmode=silent`;
+      // vault 可选：省略时 Advanced URI 自动写入当前打开的仓库，省去用户手动填仓库名的麻烦
+      const vaultParam = vault ? `vault=${encodedVault}&` : '';
+      const uri = `obsidian://adv-uri?${vaultParam}filepath=${filepath}&data=${encodedContent}&mode=overwrite&openmode=silent`;
 
       // URI 长度限制：浏览器 URL 通常上限约 2MB，但 obsidian:// 实际处理更保守
       // Advanced URI 插件对长 URL 支持较好，但仍建议控制在 100KB 以内
@@ -489,7 +495,9 @@ async function openObsidianUri(vault, filename, content, mode) {
     }
 
     // 方式 2：obsidian://new — 每次创建新文件
-    const uri = `obsidian://new?vault=${encodedVault}&name=${encodeURIComponent(filename)}&content=${encodedContent}`;
+    // vault 可选：省略时 Advanced URI 自动写入当前打开的仓库
+    const vaultParam = vault ? `vault=${encodedVault}&` : '';
+    const uri = `obsidian://new?${vaultParam}name=${encodeURIComponent(filename)}&content=${encodedContent}`;
 
     if (uri.length > 100000) {
       return { success: false, reason: '内容过长，URI 方式不支持。建议使用下载文件方式', method: 'new' };
@@ -581,9 +589,7 @@ async function saveGlossaryTerm(term) {
   }
 
   if (mechanism === 'adv-uri') {
-    if (!vault) {
-      return { ok: false, fallbackFile: true, content, filename, reason: '未填写 Obsidian 仓库名，已生成文件' };
-    }
+    // vault 可选：省略时 Advanced URI 自动写入当前打开的仓库
     const r = await openObsidianUri(vault, filepath, content, 'adv-uri');
     if (r.success) {
       // obsidian:// 无法验证是否真正写入，标记为未验证；但写入已尝试，不自动下文件
@@ -698,8 +704,8 @@ chrome.commands.onCommand.addListener((command) => {
 
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
-    console.log('[WT] 划词翻译助手已安装 v2.1.8');
+    console.log('[WT] 划词翻译助手已安装 v2.1.9');
   } else if (details.reason === 'update') {
-    console.log('[WT] 划词翻译助手已更新到 v2.1.8');
+    console.log('[WT] 划词翻译助手已更新到 v2.1.9');
   }
 });
