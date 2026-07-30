@@ -299,6 +299,36 @@ body {
   border: 1px solid #e5e7eb;
 }
 
+/* Obsidian 连接状态 */
+.wb-obs-status {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 10px;
+  padding: 2px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  vertical-align: middle;
+}
+
+.wb-obs-ok {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.wb-obs-bad {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.wb-obs-unknown {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
 /* 列表 */
 .wb-list {
   display: flex;
@@ -443,6 +473,16 @@ body {
   padding: 8px 10px;
   border-radius: 6px;
   border-left: 3px solid #f59e0b;
+  line-height: 1.5;
+  font-size: 12px;
+}
+
+.wb-hint-info {
+  color: #1d4ed8;
+  background: #eff6ff;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border-left: 3px solid #3b82f6;
   line-height: 1.5;
   font-size: 12px;
 }

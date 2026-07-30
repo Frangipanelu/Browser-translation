@@ -42,6 +42,7 @@ async function init() {
   await loadWords();
   await loadTags();
   await checkSyncStatus();
+  updateObsStatusUI();
 
   switchTab(currentTab);
 
@@ -140,6 +141,30 @@ function updateSyncStateUI() {
   } else {
     el.textContent = '● 已是最新';
     el.className = 'wb-sync-pill wb-sync-ok';
+  }
+}
+
+// 检测 Obsidian 连接状态（rest 可探测；adv-uri/file 标记未知）
+async function updateObsStatusUI() {
+  const el = document.getElementById('wb-obs-status');
+  if (!el) return;
+  el.className = 'wb-obs-status wb-obs-unknown';
+  el.textContent = 'Obsidian：检测中…';
+  try {
+    const r = await chrome.runtime.sendMessage({ action: 'check-obsidian' });
+    if (r.reachable === true) {
+      el.className = 'wb-obs-status wb-obs-ok';
+      el.textContent = '✓ Obsidian 已连接（REST）';
+    } else if (r.reachable === false) {
+      el.className = 'wb-obs-status wb-obs-bad';
+      el.textContent = '✕ Obsidian 未连接';
+    } else {
+      el.className = 'wb-obs-status wb-obs-unknown';
+      el.textContent = '? Obsidian 状态未知（需运行 + Advanced URI 插件）';
+    }
+  } catch (e) {
+    el.className = 'wb-obs-status wb-obs-unknown';
+    el.textContent = '? 无法检测 Obsidian';
   }
 }
 
@@ -287,11 +312,13 @@ async function pushToGlossary(id) {
 
   try {
     const r = await chrome.runtime.sendMessage({ action: 'glossary-save', term });
-    if (r.ok) {
-      showToast(`已存为术语 → ${r.filename}`);
-    } else if (r.fallbackFile) {
+    if (r.fallbackFile) {
       downloadContent(r.content, r.filename);
-      showToast('Obsidian 未响应，已下载文件，请放入 Glossary 文件夹');
+      showToast(r.unverified
+        ? '已尝试写入 Obsidian；同时已下载文件兜底，请放入 Glossary 文件夹'
+        : 'Obsidian 未响应，已下载文件，请放入 Glossary 文件夹');
+    } else if (r.ok) {
+      showToast(`已存为术语 → ${r.filename}`);
     } else {
       showToast('保存失败：' + (r.reason || '未知错误'));
     }
@@ -327,11 +354,21 @@ async function exportAllGlossary() {
     const result = await chrome.runtime.sendMessage({ action: 'glossary-save-all' });
     btn.innerHTML = originalText;
     btn.disabled = false;
-    if (result && result.ok) {
+    if (result && result.fallbackFile) {
+      // Obsidian 不可达或无法验证：自动下载合并的 .md 兜底
+      if (result.combined && result.content) {
+        downloadContent(result.content, result.filename);
+      }
       needsSync = false;
       removeSyncBanner();
       updateSyncStateUI();
-      showToast(`已存为术语 ${result.exported} 条${result.failed ? `（${result.failed} 条失败，已下载文件）` : ''} → Glossary 文件夹`);
+      const n = (result.exported || 0) + (result.failed || 0);
+      showToast(`Obsidian 未就绪，已下载 ${n} 条术语到 ${result.filename}，请放入仓库的 Glossary 文件夹`);
+    } else if (result && result.ok) {
+      needsSync = false;
+      removeSyncBanner();
+      updateSyncStateUI();
+      showToast(`已存为术语 ${result.exported} 条 → Glossary 文件夹`);
     } else {
       showToast('批量保存失败：' + (result?.reason || '未知错误'));
     }
@@ -387,7 +424,12 @@ async function exportToObsidian() {
       }
     } else {
       const methodText = result.method === 'adv-uri' ? '增量同步' : '新文件';
-      showToast(`已${methodText}导出 ${result.exported} 个单词到 Obsidian`);
+      if (result.fallbackFile && result.fileContent) {
+        downloadContent(result.fileContent, result.filename);
+        showToast(`已尝试写入 Obsidian；同时已下载 ${result.filename} 兜底，请放入仓库 Glossary 文件夹`);
+      } else {
+        showToast(`已${methodText}导出 ${result.exported} 个单词到 Obsidian`);
+      }
       needsSync = false;
       removeSyncBanner();
       updateSyncStateUI();

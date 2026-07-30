@@ -123,6 +123,13 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return true;
   }
 
+  if (msg.action === 'check-obsidian') {
+    checkObsidianReachable()
+      .then((r) => sendResponse(r))
+      .catch((e) => sendResponse({ reachable: false, mechanism: 'unknown', detail: e.message }));
+    return true;
+  }
+
   if (msg.action === 'clear-sync-flag') {
     chrome.storage.local.set({ [SYNC_FLAG_KEY]: false }).then(() => sendResponse({ ok: true }));
     return true;
@@ -352,14 +359,18 @@ async function exportToObsidian(vault) {
   const result = await openObsidianUri(vault, filename, md, mode);
 
   if (result.success) {
-    // 同步成功，清除标记
+    // 同步「成功」：obsidian:// 无法验证是否真正写入，保守地附带文件兜底
     await chrome.storage.local.set({ [SYNC_FLAG_KEY]: false });
     return {
       ok: true,
+      unverified: result.unverified || false,
       exported: words.length,
       total: words.length,
       groups: Object.keys(groupByTag(words)).length,
-      method: result.method
+      method: result.method,
+      fallbackFile: result.unverified ? true : false,
+      fileContent: result.unverified ? md : undefined,
+      filename: result.unverified ? `${filename}.md` : undefined
     };
   }
 
@@ -371,6 +382,24 @@ async function exportToObsidian(vault) {
     fileContent: fileResult.content,
     filename: fileResult.filename
   };
+}
+
+// 探测 Obsidian 是否就绪（同步前的友好提示 + 决定是否走文件兜底）
+async function checkObsidianReachable() {
+  const data = await chrome.storage.local.get(SETTINGS_KEY);
+  const stg = data[SETTINGS_KEY] || getDefaultSettings();
+  const mechanism = stg.obsidianMechanism || 'adv-uri';
+  if (mechanism === 'rest') {
+    const base = `http://127.0.0.1:${stg.obsidianPort || '27123'}`;
+    try {
+      const resp = await fetch(base, { signal: AbortSignal.timeout(3000) });
+      return { reachable: resp.ok || resp.status === 207, mechanism, detail: 'Local REST API 可访问' };
+    } catch (e) {
+      return { reachable: false, mechanism, detail: 'Local REST API 不可达：Obsidian 未运行，或未装 Local REST API 插件，或端口不对' };
+    }
+  }
+  // adv-uri / file：浏览器无法可靠探测 obsidian:// 协议是否可用
+  return { reachable: null, mechanism, detail: '无法自动探测 obsidian:// Advanced URI 是否可用，请确保 Obsidian 已运行且已安装 Advanced URI 插件' };
 }
 
 // 通过 obsidian:// 协议写入笔记 — 支持大内容分块
@@ -396,7 +425,8 @@ async function openObsidianUri(vault, filename, content, mode) {
       setTimeout(() => {
         chrome.tabs.remove(tab.id).catch(() => {});
       }, 3000);
-      return { success: true, method: 'adv-uri' };
+      // 注意：obsidian:// 无法验证是否真正写入，标记为未确认
+      return { success: true, unverified: true, method: 'adv-uri' };
     }
 
     // 方式 2：obsidian://new — 每次创建新文件
@@ -474,49 +504,105 @@ async function saveGlossaryTerm(term) {
   const filename = sanitizeFilename(term.original) + '.md';
   const filepath = `${folder}/${filename}`;
 
-  if (mechanism === 'rest' || mechanism === 'adv-uri') {
-    if (mechanism === 'rest') {
-      const ok = await writeViaRest(filepath, content, apiKey, port);
-      if (ok) return { ok: true, method: 'rest', filename };
-      // rest 失败，继续尝试 adv-uri
-    }
-    if (vault) {
-      const r = await openObsidianUri(vault, filepath, content, 'adv-uri');
-      if (r.success) return { ok: true, method: 'adv-uri', filename };
-    }
+  if (mechanism === 'rest') {
+    const ok = await writeViaRest(filepath, content, apiKey, port);
+    if (ok) return { ok: true, method: 'rest', filename };
+    // rest 失败 → 降级到文件兜底
+    return {
+      ok: false,
+      fallbackFile: true,
+      content,
+      filename,
+      reason: 'Local REST API 写入失败（Obsidian 未运行？），已生成文件兜底'
+    };
   }
 
-  // 最终降级：生成文件供手动放入
+  if (mechanism === 'adv-uri') {
+    if (!vault) {
+      return { ok: false, fallbackFile: true, content, filename, reason: '未填写 Obsidian 仓库名，已生成文件' };
+    }
+    const r = await openObsidianUri(vault, filepath, content, 'adv-uri');
+    // obsidian:// 无法验证是否真正写入，保守地同时提供文件兜底
+    return {
+      ok: r.success,
+      unverified: true,
+      method: 'adv-uri',
+      fallbackFile: true,
+      content,
+      filename,
+      reason: r.success
+        ? '已尝试通过 obsidian:// 写入（需 Obsidian 运行中且已装 Advanced URI 插件）；同时已生成文件兜底'
+        : (r.reason || 'obsidian:// 写入失败')
+    };
+  }
+
+  // file 模式：只生成文件
   return {
     ok: false,
     fallbackFile: true,
     content,
     filename,
-    reason: 'Obsidian 未响应，已生成文件，请手动放入仓库的 ' + folder + ' 文件夹'
+    reason: '已生成文件，请手动放入仓库的 ' + folder + ' 文件夹'
   };
 }
 
 async function glossarySaveAll() {
   const words = await getWordbook();
+  if (!words.length) return { ok: false, exported: 0, failed: 0, reason: '单词本为空' };
+
+  const data = await chrome.storage.local.get(SETTINGS_KEY);
+  const stg = data[SETTINGS_KEY] || getDefaultSettings();
+  const mechanism = stg.obsidianMechanism || 'adv-uri';
+
+  // rest 模式且 Obsidian 不可达：直接生成合并文件兜底，避免每条 8s 超时
+  if (mechanism === 'rest') {
+    let restOk = false;
+    try {
+      const base = `http://127.0.0.1:${stg.obsidianPort || '27123'}`;
+      const resp = await fetch(base, { signal: AbortSignal.timeout(3000) });
+      restOk = resp.ok || resp.status === 207;
+    } catch (e) { /* ignore */ }
+    if (!restOk) {
+      const md = words.map((w) => buildGlossaryContent(wordToGlossaryTerm(w, 'term'))).join('\n\n---\n\n');
+      return {
+        ok: false,
+        fallbackFile: true,
+        combined: true,
+        content: md,
+        filename: `Glossary-${new Date().toISOString().split('T')[0]}.md`,
+        reason: 'Local REST API 不可达，已生成合并文件兜底'
+      };
+    }
+  }
+
   let okCount = 0;
   let failCount = 0;
+  const fallbackParts = [];
   for (const w of words) {
-    const term = {
-      original: w.original,
-      translated: w.translated,
-      phonetic: w.phonetic,
-      definition: w.definition,
-      context: w.context || '',
-      source: w.source || '',
-      sourceTitle: w.sourceTitle || '',
-      tags: ['glossary', ...(w.tags || [])],
-      created: new Date(w.savedAt).toISOString().split('T')[0],
-      glossaryType: 'term'
-    };
+    const term = wordToGlossaryTerm(w, 'term');
     const r = await saveGlossaryTerm(term);
-    if (r.ok) okCount++;
-    else failCount++;
+    if (r.ok && !r.unverified) {
+      okCount++;
+    } else if (r.fallbackFile) {
+      failCount++;
+      fallbackParts.push(r.content);
+    } else {
+      failCount++;
+    }
     await sleep(150);
+  }
+
+  // 有兜底文件：合并为单个 .md 一次性下载（避免 N 个下载）
+  if (failCount > 0 && fallbackParts.length) {
+    return {
+      ok: okCount > 0,
+      exported: okCount,
+      failed: failCount,
+      fallbackFile: true,
+      combined: true,
+      content: fallbackParts.join('\n\n---\n\n'),
+      filename: `Glossary-${new Date().toISOString().split('T')[0]}.md`
+    };
   }
   return { ok: true, exported: okCount, failed: failCount };
 }
@@ -548,8 +634,8 @@ chrome.commands.onCommand.addListener((command) => {
 
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
-    console.log('[WT] 划词翻译助手已安装 v2.1.3');
+    console.log('[WT] 划词翻译助手已安装 v2.1.4');
   } else if (details.reason === 'update') {
-    console.log('[WT] 划词翻译助手已更新到 v2.1.3');
+    console.log('[WT] 划词翻译助手已更新到 v2.1.4');
   }
 });
