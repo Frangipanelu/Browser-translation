@@ -150,6 +150,12 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         if (settings.obsidianPort === '27123' || !settings.obsidianPort) {
           settings.obsidianPort = '27124';
         }
+        // 迁移：用户明确要求改用 Advanced URI 同步，故将历史 rest 设置迁回 adv-uri
+        if (settings.obsidianMechanism === 'rest') {
+          settings.obsidianMechanism = 'adv-uri';
+          settings.obsidianMode = 'adv-uri';
+          chrome.storage.local.set({ [SETTINGS_KEY]: settings });
+        }
         sendResponse({
           settings,
           configured: data[CONFIGURED_KEY] || false
@@ -367,7 +373,7 @@ async function exportToObsidian(vault) {
   const result = await openObsidianUri(vault, filename, md, mode);
 
   if (result.success) {
-    // 同步「成功」：obsidian:// 无法验证是否真正写入，保守地附带文件兜底
+    // 写入已尝试（obsidian:// 状态无法验证）；不自动下文件，用户可手动「导出为文件」备份
     await chrome.storage.local.set({ [SYNC_FLAG_KEY]: false });
     return {
       ok: true,
@@ -375,10 +381,7 @@ async function exportToObsidian(vault) {
       exported: words.length,
       total: words.length,
       groups: Object.keys(groupByTag(words)).length,
-      method: result.method,
-      fallbackFile: result.unverified ? true : false,
-      fileContent: result.unverified ? md : undefined,
-      filename: result.unverified ? `${filename}.md` : undefined
+      method: result.method
     };
   }
 
@@ -455,7 +458,9 @@ async function checkObsidianReachable() {
 async function openObsidianUri(vault, filename, content, mode) {
   try {
     const encodedVault = encodeURIComponent(vault);
-    const filepath = encodeURIComponent(filename + '.md');
+    // 防止重复 .md 后缀：Glossary 路径已带 .md 时不再追加（修复 term.md.md 缺陷）
+    const baseName = filename.endsWith('.md') ? filename : filename + '.md';
+    const filepath = encodeURIComponent(baseName);
     const encodedContent = encodeURIComponent(content);
 
     // 方式 1：Advanced URI — mode=overwrite
@@ -572,17 +577,23 @@ async function saveGlossaryTerm(term) {
       return { ok: false, fallbackFile: true, content, filename, reason: '未填写 Obsidian 仓库名，已生成文件' };
     }
     const r = await openObsidianUri(vault, filepath, content, 'adv-uri');
-    // obsidian:// 无法验证是否真正写入，保守地同时提供文件兜底
+    if (r.success) {
+      // obsidian:// 无法验证是否真正写入，标记为未验证；但写入已尝试，不自动下文件
+      return {
+        ok: true,
+        unverified: true,
+        method: 'adv-uri',
+        filename,
+        reason: '已通过 obsidian:// 写入（需 Obsidian 运行中且已装 Advanced URI 插件）；状态未验证，可在「导出为文件」手动备份'
+      };
+    }
+    // 真正的失败（URL 过长 / 协议打开报错）：生成文件兜底
     return {
-      ok: r.success,
-      unverified: true,
-      method: 'adv-uri',
+      ok: false,
       fallbackFile: true,
       content,
       filename,
-      reason: r.success
-        ? '已尝试通过 obsidian:// 写入（需 Obsidian 运行中且已装 Advanced URI 插件）；同时已生成文件兜底'
-        : (r.reason || 'obsidian:// 写入失败')
+      reason: r.reason || 'obsidian:// 写入失败，已生成文件兜底'
     };
   }
 
@@ -626,7 +637,7 @@ async function glossarySaveAll() {
   for (const w of words) {
     const term = wordToGlossaryTerm(w, 'term');
     const r = await saveGlossaryTerm(term);
-    if (r.ok && !r.unverified) {
+    if (r.ok) {
       okCount++;
     } else if (r.fallbackFile) {
       failCount++;
@@ -679,8 +690,8 @@ chrome.commands.onCommand.addListener((command) => {
 
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
-    console.log('[WT] 划词翻译助手已安装 v2.1.6');
+    console.log('[WT] 划词翻译助手已安装 v2.1.7');
   } else if (details.reason === 'update') {
-    console.log('[WT] 划词翻译助手已更新到 v2.1.6');
+    console.log('[WT] 划词翻译助手已更新到 v2.1.7');
   }
 });

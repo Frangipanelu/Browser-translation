@@ -66,13 +66,13 @@ created: 2026-07-30
 
 | 模式 | 原理 | 适用 | 优点 | 缺点 |
 |------|------|------|------|------|
-| `rest`（推荐） | 调 Obsidian **Local REST API**（`PUT http://127.0.0.1:27123/vault/Glossary/术语.md`） | 装了 Local REST API 插件 | 无 URL 长度限制、可建文件夹、最稳 | 需装插件、可能要 API Key |
-| `adv-uri`（默认，兼容旧版） | `obsidian://adv-uri?vault=&filepath=&data=&mode=overwrite` | 装了 Advanced URI 插件 | 无需后端、简单 | URL 过长易失败（单术语文件很小，基本不会触发） |
+| `adv-uri`（默认，推荐） | `obsidian://adv-uri?vault=&filepath=&data=&mode=overwrite` | 装了 Advanced URI 插件 | **无需后端、不碰端口/证书、最省心** | 写入结果无法验证（仅标记未验证）；单术语文件极小，URL 长度问题基本不会触发 |
+| `rest` | 调 Obsidian **Local REST API**（`PUT http://127.0.0.1:27123/vault/Glossary/术语.md`） | 装了 Local REST API 插件并开本地服务 | 无 URL 长度限制、可建文件夹、可验证 | 需开服务、端口/HTTPS 证书配置较麻烦 |
 | `file`（兜底） | 直接下载 .md 文件 | 都不想装 / Obsidian 没开 | 零依赖 | 需手动拖入仓库 |
 
-**失败自动降级链**：`rest` 失败 → 试 `adv-uri` → 再失败 → 下载 .md 文件并提示手动放入。永不静默丢失。
+**失败自动降级链**：正常走 `adv-uri`（默认）；若 `adv-uri` 真正失败（仓库名空 / URL 超长 / 协议报错）或用户选 `rest`，再分别兜底 → 下载 .md 文件并提示手动放入。永不静默丢失。
 
-> 单术语文件体积极小（几百字节），所以 `adv-uri` 的 URL 长度问题基本不会触发；`rest` 是长期最稳的选择。
+> 单术语文件体积极小（几百字节），所以 `adv-uri` 的 URL 长度问题基本不会触发；其唯一代价是写入结果无法验证，故统一标记为「未验证」，绝不伪装成功。
 
 ---
 

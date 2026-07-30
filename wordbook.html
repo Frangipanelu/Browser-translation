@@ -78,12 +78,12 @@
         <div class="wb-form">
           <label class="wb-label">写入方式</label>
           <select class="wb-select wb-select-full" id="wb-set-mechanism">
-            <option value="adv-uri">obsidian:// Advanced URI（需装 Advanced URI 插件，默认）</option>
-            <option value="rest">Local REST API（推荐，最稳，无长度限制）</option>
+            <option value="adv-uri">obsidian:// Advanced URI（推荐：免端口/证书，装 Advanced URI 插件即可）</option>
+            <option value="rest">Local REST API（需开本地服务端口，配置较麻烦）</option>
             <option value="file">仅下载 .md 文件（不依赖插件）</option>
           </select>
           <span class="wb-hint wb-hint-warn">术语表 = 你精选的"专业术语 / 地道表达"，每条写成一个独立笔记，存进仓库的 Glossary 文件夹，可用 Dataview 按出处/类型/标签查询。</span>
-          <span class="wb-hint wb-hint-info">同步前请先启动 Obsidian：rest 模式需装 Local REST API 插件；adv-uri 模式需装 Advanced URI 插件。若 Obsidian 未运行或插件缺失，扩展会<b>自动下载 .md 文件</b>供你手动拖入 Glossary 文件夹，不会静默失败。</span>
+          <span class="wb-hint wb-hint-info">推荐用 <b>Advanced URI</b>：无需开任何本地服务，装好插件、启动 Obsidian 即可同步。若 Obsidian 未运行或插件缺失，可随时点「导出为文件」手动拖入 Glossary 文件夹，不会静默失败。</span>
 
           <label class="wb-label">Obsidian 仓库名</label>
           <input type="text" class="wb-input" id="wb-set-vault" placeholder="左侧边栏显示的名称，如 Knowledge（rest 模式可留空）" />

@@ -100,13 +100,13 @@ created: 2026-07-30
 `context` 字段是**划词时选中文字所在的整句话**（自动截取所在句子），`source` / `sourceTitle` 是页面 URL 与标题。这样术语不是孤立词条，而是带着阅读语境和出处，方便日后回看。
 
 ### 三种写入方式（自动降级）
-1. **Local REST API（最稳，推荐）**：Obsidian 安装 Local REST API 插件，通过本地端口写入，无 URL 长度限制。
-2. **Advanced URI**：安装 Advanced URI 插件，用 `obsidian://` 协议写入。
-3. **文件下载**：Obsidian 未响应时，自动下载 .md，手动放入 `Glossary/` 文件夹。
+1. **Advanced URI（默认，推荐）**：Obsidian 安装 Advanced URI 插件，用 `obsidian://` 协议写入，**无需开任何本地服务、不碰端口与证书**，最省心。
+2. **Local REST API**：装 Local REST API 插件并开本地服务端口（HTTPS 27124 / HTTP 27123），无 URL 长度限制，但配置较麻烦。
+3. **文件下载**：Obsidian 未响应时，随时点「导出为文件」下载 .md，手动放入 `Glossary/` 文件夹。
 
 ### 使用步骤
-1. Obsidian 装 Local REST API（或 Advanced URI）插件；
-2. 扩展设置填仓库名 + 选写入方式；
+1. Obsidian 装 **Advanced URI** 插件（推荐）并启动；
+2. 扩展设置填仓库名 + 写入方式选 `adv-uri`（默认即为它）；
 3. 网页划词收藏 → 单词本里给值得留的条目选「类型」→ 点 📌 存为术语；
 4. 在 Obsidian 用 `GLOSSARY_QUERIES.md` 的模板按出处 / 类型 / 标签检索。
 
