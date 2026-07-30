@@ -465,7 +465,8 @@ async function openObsidianUri(vault, filename, content, mode) {
 
     // 方式 1：Advanced URI — mode=overwrite
     if (mode === 'adv-uri') {
-      const uri = `obsidian://adv-uri?vault=${encodedVault}&filepath=${filepath}&data=${encodedContent}&mode=overwrite`;
+      // openmode=silent 尽量不让 Obsidian 抢焦点（插件支持时生效）
+      const uri = `obsidian://adv-uri?vault=${encodedVault}&filepath=${filepath}&data=${encodedContent}&mode=overwrite&openmode=silent`;
 
       // URI 长度限制：浏览器 URL 通常上限约 2MB，但 obsidian:// 实际处理更保守
       // Advanced URI 插件对长 URL 支持较好，但仍建议控制在 100KB 以内
@@ -474,11 +475,15 @@ async function openObsidianUri(vault, filename, content, mode) {
         return { success: false, reason: '内容过长（超过 100KB），URI 方式不支持。建议使用下载文件方式', method: 'adv-uri' };
       }
 
-      const tab = await chrome.tabs.create({ url: uri, active: false });
-      // 3 秒后关闭标签页（Advanced URI 处理很快）
+      console.log('[WT] adv-uri:', uri.slice(0, 200) + (uri.length > 200 ? '...' : ''));
+      // 必须用 active:true 创建标签页：Chrome 对后台自定义协议标签页的调度可能不触发 OS 协议处理器
+      const tab = await chrome.tabs.create({ url: uri, active: true });
+      // 给 OS 协议处理器留足时间，再关闭临时标签页
       setTimeout(() => {
-        chrome.tabs.remove(tab.id).catch(() => {});
-      }, 3000);
+        chrome.tabs.remove(tab.id).catch((err) => {
+          console.warn('[WT] 关闭 adv-uri 临时标签页失败:', err?.message || err);
+        });
+      }, 2000);
       // 注意：obsidian:// 无法验证是否真正写入，标记为未确认
       return { success: true, unverified: true, method: 'adv-uri' };
     }
@@ -490,10 +495,13 @@ async function openObsidianUri(vault, filename, content, mode) {
       return { success: false, reason: '内容过长，URI 方式不支持。建议使用下载文件方式', method: 'new' };
     }
 
-    const tab = await chrome.tabs.create({ url: uri, active: false });
+    console.log('[WT] obsidian://new:', uri.slice(0, 200) + (uri.length > 200 ? '...' : ''));
+    const tab = await chrome.tabs.create({ url: uri, active: true });
     setTimeout(() => {
-      chrome.tabs.remove(tab.id).catch(() => {});
-    }, 3000);
+      chrome.tabs.remove(tab.id).catch((err) => {
+        console.warn('[WT] 关闭 obsidian://new 临时标签页失败:', err?.message || err);
+      });
+    }, 2000);
     return { success: true, method: 'new' };
 
   } catch (e) {
@@ -690,8 +698,8 @@ chrome.commands.onCommand.addListener((command) => {
 
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
-    console.log('[WT] 划词翻译助手已安装 v2.1.7');
+    console.log('[WT] 划词翻译助手已安装 v2.1.8');
   } else if (details.reason === 'update') {
-    console.log('[WT] 划词翻译助手已更新到 v2.1.7');
+    console.log('[WT] 划词翻译助手已更新到 v2.1.8');
   }
 });
