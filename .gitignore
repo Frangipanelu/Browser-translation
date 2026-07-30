@@ -1,0 +1,44 @@
+# Temporary files
+gen_icons.py
+generate_icon.py
+resize_icon.py
+*.pyc
+__pycache__/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Build / packaging artifacts
+*.crx
+*.zip
+*.pem
+dist/
+build/
+out/
+*.xpi
+
+# Node (本仓库零运行时依赖，仅防意外安装)
+node_modules/
+
+# Test coverage / output
+coverage/
+.nyc_output/
+
+# Secrets / local config (never commit)
+*.key
+.env
+.env.*
+credentials.json
+secrets.*
+
+# WorkBuddy / agent scratch (project-local only)
+.workbuddy/
+
+# Logs
+*.log
+npm-debug.log*

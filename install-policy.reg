@@ -1,0 +1,30 @@
+Windows Registry Editor Version 5.00
+
+; ============================================================
+; 划词翻译助手 - Chrome 扩展策略
+; 将此策略添加到注册表后，Chrome 不会再提示
+; "开发者模式运行的扩展程序可能损害你的计算机"
+;
+; 使用方法：
+;   1. 右键此文件 -> 合并（需要管理员权限）
+;   2. 重启 Chrome
+;   3. 打开 chrome://policy 验证策略已生效
+;
+; 如需移除策略，运行 uninstall-policy.reg
+; ============================================================
+
+; --- Chrome 策略 ---
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome\ExtensionInstallAllowlist]
+"1"="*"
+
+; --- Edge 策略 ---
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge\ExtensionInstallAllowlist]
+"1"="*"
+
+; --- Chrome 64位 用户级策略（部分系统需要） ---
+[HKEY_CURRENT_USER\SOFTWARE\Policies\Google\Chrome\ExtensionInstallAllowlist]
+"1"="*"
+
+; --- Edge 64位 用户级策略 ---
+[HKEY_CURRENT_USER\SOFTWARE\Policies\Microsoft\Edge\ExtensionInstallAllowlist]
+"1"="*"

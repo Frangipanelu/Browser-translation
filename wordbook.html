@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>单词本 - 划词翻译助手</title>
+<link rel="stylesheet" href="wordbook.css">
+</head>
+<body>
+  <div class="wb-container">
+    <!-- 侧边栏 -->
+    <aside class="wb-sidebar" id="wb-sidebar">
+      <div class="wb-logo">
+        <span>🔤</span>
+        <span class="wb-logo-text">划词翻译</span>
+      </div>
+      <nav class="wb-nav">
+        <a class="wb-nav-item active" data-tab="words" id="wb-nav-words">📖 单词本</a>
+        <a class="wb-nav-item" data-tab="settings" id="wb-nav-settings">⚙ 设置</a>
+      </nav>
+      <div class="wb-sidebar-footer">
+        <span class="wb-version">v2.0.0</span>
+      </div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="wb-main">
+      <!-- 单词本面板 -->
+      <div class="wb-panel active" id="wb-panel-words">
+        <div class="wb-toolbar">
+          <div class="wb-search-wrap">
+            <input type="text" class="wb-search" id="wb-search" placeholder="搜索单词..." />
+          </div>
+          <div class="wb-filter-wrap">
+            <select class="wb-select" id="wb-tag-filter">
+              <option value="">全部标签</option>
+            </select>
+          </div>
+          <div class="wb-toolbar-actions">
+            <button class="wb-btn wb-btn-export" id="wb-export-obsidian" title="全部存为术语到 Glossary">📑</button>
+            <button class="wb-btn wb-btn-export" id="wb-export-file" title="下载 Markdown">📥</button>
+          </div>
+        </div>
+
+        <div class="wb-stats" id="wb-stats">
+          共 <strong id="wb-total">0</strong> 个单词
+        </div>
+
+        <div class="wb-list" id="wb-list">
+          <div class="wb-empty">
+            <span class="wb-empty-icon">📭</span>
+            <p>单词本还是空的</p>
+            <p class="wb-empty-hint">浏览网页时选中文字，点击翻译气泡中的 ⭐ 即可收藏</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 设置面板 -->
+      <div class="wb-panel" id="wb-panel-settings">
+        <h2 class="wb-section-title">翻译引擎</h2>
+        <div class="wb-form">
+          <label class="wb-label">翻译引擎</label>
+          <select class="wb-select wb-select-full" id="wb-set-engine">
+            <option value="google">Google 翻译（免费，推荐）+ MyMemory 自动备用</option>
+            <option value="deepl">DeepL 免费版</option>
+          </select>
+
+          <label class="wb-label" id="wb-deepl-key-label" style="display:none">DeepL API Key</label>
+          <input type="text" class="wb-input" id="wb-set-deepl-key" placeholder="DeepL API Key（免费注册可得）" style="display:none" />
+
+          <button class="wb-btn-test" id="wb-test-conn">测试翻译连接</button>
+          <div class="wb-conn-test" id="wb-conn-result"></div>
+        </div>
+
+        <h2 class="wb-section-title">Obsidian 术语表（Glossary）</h2>
+        <div class="wb-form">
+          <label class="wb-label">写入方式</label>
+          <select class="wb-select wb-select-full" id="wb-set-mechanism">
+            <option value="adv-uri">obsidian:// Advanced URI（需装 Advanced URI 插件，默认）</option>
+            <option value="rest">Local REST API（推荐，最稳，无长度限制）</option>
+            <option value="file">仅下载 .md 文件（不依赖插件）</option>
+          </select>
+          <span class="wb-hint wb-hint-warn">术语表 = 你精选的"专业术语 / 地道表达"，每条写成一个独立笔记，存进仓库的 Glossary 文件夹，可用 Dataview 按出处/类型/标签查询。</span>
+
+          <label class="wb-label">Obsidian 仓库名</label>
+          <input type="text" class="wb-input" id="wb-set-vault" placeholder="左侧边栏显示的名称，如 Knowledge（rest 模式可留空）" />
+          <span class="wb-hint wb-hint-warn">填<strong>仓库名称</strong>（Obsidian 左侧显示的文字），<strong>不是</strong>文件夹路径！例如 "Knowledge"，不要填 "D:\obsidian\..."</span>
+
+          <label class="wb-label">Glossary 文件夹名</label>
+          <input type="text" class="wb-input" id="wb-set-folder" placeholder="Glossary" />
+
+          <label class="wb-label">Local REST API 端口</label>
+          <input type="text" class="wb-input" id="wb-set-port" placeholder="27123" />
+          <span class="wb-hint">仅 rest 模式需要。Obsidian 装 <strong>Local REST API</strong> 插件后，默认端口 27123。</span>
+
+          <label class="wb-label">API Key（可选）</label>
+          <input type="text" class="wb-input" id="wb-set-apikey" placeholder="若插件开启了 Authorization 则填写" />
+        </div>
+
+        <div class="wb-form-actions">
+          <button class="wb-btn wb-btn-primary" id="wb-save-settings">保存设置</button>
+          <span class="wb-saved-msg" id="wb-saved-msg" style="display:none">✅ 已保存</span>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="wb-toast" class="wb-toast" style="display:none"></div>
+
+  <script src="wordbook.js"></script>
+</body>
+</html>

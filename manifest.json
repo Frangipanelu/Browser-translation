@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "划词翻译助手",
+  "version": "2.1.1",
+  "description": "选中即翻译（中英双向），音标+词性释义+TTS发音，多引擎备用+手动切换方向；收藏可一键沉淀为 Obsidian 专业术语表（Glossary）。",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "划词翻译助手"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/lib/lang.js", "src/lib/context.js", "content.js"],
+      "css": ["content.css"],
+      "run_at": "document_end"
+    }
+  ],
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": [
+    "https://translate.googleapis.com/*",
+    "https://api-free.deepl.com/*",
+    "https://api.dictionaryapi.dev/*",
+    "https://api.mymemory.translated.net/*",
+    "http://127.0.0.1:27123/*",
+    "http://localhost:27123/*"
+  ],
+  "commands": {
+    "open-wordbook": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+W"
+      },
+      "description": "打开单词本"
+    }
+  }
+}

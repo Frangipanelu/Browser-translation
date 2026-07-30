@@ -1,0 +1,11 @@
+Windows Registry Editor Version 5.00
+
+; ============================================================
+; 卸载划词翻译助手扩展策略
+; 合并此文件可移除扩展安装白名单策略
+; ============================================================
+
+[-HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome\ExtensionInstallAllowlist]
+[-HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge\ExtensionInstallAllowlist]
+[-HKEY_CURRENT_USER\SOFTWARE\Policies\Google\Chrome\ExtensionInstallAllowlist]
+[-HKEY_CURRENT_USER\SOFTWARE\Policies\Microsoft\Edge\ExtensionInstallAllowlist]

@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>导出模板预览</title>
+<style>
+  :root {
+    --bg: #fafbfc;
+    --card: #ffffff;
+    --text: #24292e;
+    --sub: #586069;
+    --border: #e1e4e8;
+    --accent: #0366d6;
+    --tag: #0366d6;
+    --green: #28a745;
+    --purple: #6f42c1;
+    --orange: #e36209;
+    --red: #d73a49;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 20px;
+  }
+  .container { max-width: 960px; margin: 0 auto; }
+
+  h1 { font-size: 28px; margin-bottom: 8px; }
+  .subtitle { color: var(--sub); margin-bottom: 32px; }
+
+  .template-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .template-card h2 {
+    font-size: 20px;
+    margin-bottom: 4px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .template-card .desc {
+    color: var(--sub);
+    font-size: 13px;
+    margin-bottom: 20px;
+    padding-left: 0;
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .badge-current { background: #dbedff; color: var(--accent); }
+  .badge-new { background: #dcffe4; color: var(--green); }
+  .badge-recommend { background: #fbefff; color: var(--purple); }
+
+  .markdown-preview {
+    background: #f6f8fa;
+    border: 1px solid #d1d5da;
+    border-radius: 6px;
+    padding: 20px 24px;
+    font-family: "SF Mono", "Consolas", "Liberation Mono", monospace;
+    font-size: 13px;
+    line-height: 1.65;
+    white-space: pre-wrap;
+    word-break: break-all;
+    overflow-x: auto;
+    color: #24292e;
+    max-height: 600px;
+    overflow-y: auto;
+  }
+
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 32px;
+    font-size: 13px;
+  }
+  .compare-table th, .compare-table td {
+    border: 1px solid var(--border);
+    padding: 10px 14px;
+    text-align: left;
+  }
+  .compare-table th {
+    background: #f6f8fa;
+    font-weight: 600;
+  }
+  .compare-table .check { color: var(--green); font-weight: 600; }
+  .compare-table .cross { color: var(--red); }
+  .compare-table .half  { color: var(--orange); }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>单词本 Obsidian 导出 — 模板方案对比</h1>
+<p class="subtitle">以下假设单词本有 <strong>8 个单词</strong>，分布在 <strong>技术 / 日常 / 文学</strong> 三个标签。每个模板展示实际生成的 Markdown 源码。</p>
+
+<!-- ========= 模板 A：当前方案 ========= -->
+<div class="template-card">
+  <h2>模板 A — 当前方案（分标签独立文件 + 表格） <span class="badge badge-current">当前使用</span></h2>
+  <p class="desc">每个标签生成一个独立 <code>.md</code> 文件，YAML frontmatter + 表格，有编号列和分类列。</p>
+  <div class="markdown-preview">---
+tag: "技术"
+date: 2026-06-30
+count: 3
+type: wordbook
+---
+
+# 单词本 · 技术
+
+| # | 原文 | 译文 | 分类 |
+|---|------|------|------|
+| 1 | algorithm | 算法 | 技术 |
+| 2 | recursion | 递归 | 技术 |
+| 3 | compiler | 编译器 | 技术 |</div>
+</div>
+
+<!-- ========= 模板 B：简约纯表格 ========= -->
+<div class="template-card">
+  <h2>模板 B — 简约纯表格 <span class="badge badge-new">简洁</span></h2>
+  <p class="desc">所有标签合并到一个文件，H2 分组，纯表格无编号、无 frontmatter，极致简洁。</p>
+  <div class="markdown-preview"># 📖 我的单词本
+
+> 总计 8 个 · 导出 2026-06-30
+
+## 技术（3 个）
+
+| 原文 | 译文 |
+|------|------|
+| algorithm | 算法 |
+| recursion | 递归 |
+| compiler | 编译器 |
+
+## 日常（3 个）
+
+| 原文 | 译文 |
+|------|------|
+| grocery | 杂货 |
+| commute | 通勤 |
+| recipe | 食谱 |
+
+## 文学（2 个）
+
+| 原文 | 译文 |
+|------|------|
+| melancholy | 忧郁 |
+| serendipity | 不期而遇的美好 |</div>
+</div>
+
+<!-- ========= 模板 C：Callout 卡片式 ========= -->
+<div class="template-card">
+  <h2>模板 C — Callout 卡片式 <span class="badge badge-new">视觉</span></h2>
+  <p class="desc">利用 Obsidian Callout（&gt; [!info]）把每个单词渲染为独立卡片，阅读体验好。</p>
+  <div class="markdown-preview"># 📖 我的单词本
+
+> 总计 8 个 · 导出 2026-06-30
+
+## 技术
+
+> [!info] algorithm
+> **译文**：算法
+> **分类**：技术
+
+> [!info] recursion
+> **译文**：递归
+> **分类**：技术
+
+> [!info] compiler
+> **译文**：编译器
+> **分类**：技术
+
+## 日常
+
+> [!info] grocery
+> **译文**：杂货
+> **分类**：日常
+
+> [!info] commute
+> **译文**：通勤
+> **分类**：日常
+
+> [!info] recipe
+> **译文**：食谱
+> **分类**：日常
+
+## 文学
+
+> [!info] melancholy
+> **译文**：忧郁
+> **分类**：文学
+
+> [!info] serendipity
+> **译文**：不期而遇的美好
+> **分类**：文学</div>
+</div>
+
+<!-- ========= 模板 D：标签页（Tab）式 ========= -->
+<div class="template-card">
+  <h2>模板 D — 标签页式 <span class="badge badge-recommend">推荐</span></h2>
+  <p class="desc">利用 Obsidian 的 tabs 插件语法（或原生 HTML）按标签分页显示，一个文件内实现多标签切换效果。</p>
+  <div class="markdown-preview"># 📖 我的单词本
+
+> 总计 8 个 · 导出 2026-06-30
+
+> [!tabs]
+> **技术** · **日常** · **文学**
+
+---
+
+## 技术（3 个）
+
+| 原文 | 译文 | 分类 |
+|------|------|------|
+| algorithm | 算法 | `#技术` |
+| recursion | 递归 | `#技术` |
+| compiler | 编译器 | `#技术` |
+
+## 日常（3 个）
+
+| 原文 | 译文 | 分类 |
+|------|------|------|
+| grocery | 杂货 | `#日常` |
+| commute | 通勤 | `#日常` |
+| recipe | 食谱 | `#日常` |
+
+## 文学（2 个）
+
+| 原文 | 译文 | 分类 |
+|------|------|------|
+| melancholy | 忧郁 | `#文学` |
+| serendipity | 不期而遇的美好 | `#文学` |</div>
+</div>
+
+<!-- ========= 模板 E：Dataview 友好式 ========= -->
+<div class="template-card">
+  <h2>模板 E — Dataview 友好式 <span class="badge badge-new">可查询</span></h2>
+  <p class="desc">使用 <code>word:: xxx</code> 内联字段格式，配合 Dataview 插件可快速查询"所有 #技术 的单词"等。</p>
+  <div class="markdown-preview"># 📖 我的单词本
+
+## 技术
+
+- (word:: algorithm) → (translation:: 算法) `#技术`
+- (word:: recursion) → (translation:: 递归) `#技术`
+- (word:: compiler) → (translation:: 编译器) `#技术`
+
+## 日常
+
+- (word:: grocery) → (translation:: 杂货) `#日常`
+- (word:: commute) → (translation:: 通勤) `#日常`
+- (word:: recipe) → (translation:: 食谱) `#日常`
+
+## 文学
+
+- (word:: melancholy) → (translation:: 忧郁) `#文学`
+- (word:: serendipity) → (translation:: 不期而遇的美好) `#文学`</div>
+</div>
+
+<!-- ========= 模板 F：Frontmatter 列表 ========= -->
+<div class="template-card">
+  <h2>模板 F — Frontmatter 列表式 <span class="badge badge-new">结构化</span></h2>
+  <p class="desc">所有数据放在 YAML frontmatter 中，正文用 Dataview 动态渲染表格，数据与显示分离。</p>
+  <div class="markdown-preview">---
+tags: [技术, 日常, 文学]
+words:
+  - original: "algorithm"
+    translation: "算法"
+    tag: "技术"
+  - original: "recursion"
+    translation: "递归"
+    tag: "技术"
+  - original: "compiler"
+    translation: "编译器"
+    tag: "技术"
+  - original: "grocery"
+    translation: "杂货"
+    tag: "日常"
+  - original: "commute"
+    translation: "通勤"
+    tag: "日常"
+  - original: "recipe"
+    translation: "食谱"
+    tag: "日常"
+  - original: "melancholy"
+    translation: "忧郁"
+    tag: "文学"
+  - original: "serendipity"
+    translation: "不期而遇的美好"
+    tag: "文学"
+---
+
+# 📖 我的单词本
+
+> 用 Dataview 查询：
+> ` ```dataview TABLE translation, tag FROM "单词本" WHERE tag = "技术" ``` `</div>
+</div>
+
+<!-- ========= 对比表格 ========= -->
+<h2 style="margin-top:40px;margin-bottom:12px">六套模板横向对比</h2>
+<table class="compare-table">
+  <thead>
+    <tr>
+      <th>维度</th>
+      <th>A·分文件表格</th>
+      <th>B·简约纯表</th>
+      <th>C·Callout卡片</th>
+      <th>D·标签页式</th>
+      <th>E·Dataview友好</th>
+      <th>F·Frontmatter列表</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>文件数量</td><td>每标签1个</td><td>1 个</td><td>1 个</td><td>1 个</td><td>1 个</td><td>1 个</td></tr>
+    <tr><td>Obsidian 原生支持</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td><td class="check">✅</td></tr>
+    <tr><td>需要额外插件</td><td class="cross">无</td><td class="cross">无</td><td class="cross">无</td><td class="half">tabs（可选）</td><td class="half">Dataview</td><td class="half">Dataview</td></tr>
+    <tr><td>可读性</td><td>⭐⭐⭐⭐</td><td>⭐⭐⭐⭐⭐</td><td>⭐⭐⭐⭐</td><td>⭐⭐⭐⭐</td><td>⭐⭐</td><td>⭐⭐</td></tr>
+    <tr><td>可查性</td><td>⭐⭐</td><td>⭐⭐</td><td>⭐⭐</td><td>⭐⭐</td><td>⭐⭐⭐⭐⭐</td><td>⭐⭐⭐⭐⭐</td></tr>
+    <tr><td>适合场景</td><td>标签多、想分文件</td><td>快速查阅</td><td>逐词复习</td><td>浏览切换</td><td>数据查询分析</td><td>数据查询分析</td></tr>
+    <tr><td>Obsidian 图谱</td><td>每文件独立节点</td><td>1个节点</td><td>1个节点</td><td>1个节点</td><td>1个节点</td><td>1个节点</td></tr>
+  </tbody>
+</table>
+
+<div class="template-card" style="margin-top:24px; background: #f0f7ff; border-color: #b6d4fe;">
+  <h2>📊 推荐总结</h2>
+  <p style="margin:0;color:var(--text);font-size:14px;">
+    <strong>日常使用</strong> → 选 <strong>B（简约纯表格）</strong>或 <strong>D（标签页式）</strong>，一个文件看所有词，不需要插件。<br>
+    <strong>复习背诵</strong> → 选 <strong>C（Callout 卡片式）</strong>，每张卡片独立展开，阅读体验好。<br>
+    <strong>高级用户</strong> → 选 <strong>E/F</strong>，配合 Dataview 做词频统计、按标签筛选等。<br>
+    <strong>标签很多（10+）</strong> → 保持 <strong>A（当前方案）</strong>，分文件不会让单个文件太臃肿。<br><br>
+    你倾向于哪种？我可以直接把代码改好。
+  </p>
+</div>
+
+</div>
+</body>
+</html>

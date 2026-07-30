@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 220px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 13px;
+    color: #1a1a1a;
+    background: #fff;
+    padding: 16px;
+  }
+  .wtp-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .wtp-logo {
+    font-size: 20px;
+  }
+  .wtp-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #7c3aed;
+  }
+  .wtp-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: #f0fdf4;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    font-size: 12px;
+  }
+  .wtp-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #22c55e;
+    animation: wtp-pulse 2s ease-in-out infinite;
+  }
+  @keyframes wtp-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  .wtp-stat {
+    color: #666;
+    font-size: 11px;
+    margin-bottom: 12px;
+  }
+  .wtp-stat strong {
+    color: #7c3aed;
+    font-size: 16px;
+  }
+  .wtp-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s;
+    margin-bottom: 6px;
+    text-align: left;
+  }
+  .wtp-btn-primary {
+    background: #7c3aed;
+    color: #fff;
+    font-weight: 500;
+  }
+  .wtp-btn-primary:hover { background: #6d28d9; }
+  .wtp-btn-secondary {
+    background: #f5f3ff;
+    color: #7c3aed;
+  }
+  .wtp-btn-secondary:hover { background: #ede9fe; }
+  .wtp-footer {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #f0f0f0;
+    font-size: 10px;
+    color: #aaa;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+  <div class="wtp-header">
+    <span class="wtp-logo">🔤</span>
+    <span class="wtp-title">划词翻译助手</span>
+  </div>
+
+  <div class="wtp-status">
+    <span class="wtp-dot"></span>
+    <span>划词翻译已启用</span>
+  </div>
+
+  <div class="wtp-stat" id="wtp-stat">
+    今日收藏: <strong id="wtp-count">0</strong> 个单词
+  </div>
+
+  <button class="wtp-btn wtp-btn-primary" id="wtp-wordbook">
+    📖 打开单词本
+  </button>
+
+  <button class="wtp-btn wtp-btn-secondary" id="wtp-settings">
+    ⚙ 设置
+  </button>
+
+  <div class="wtp-footer">
+    快捷键 Ctrl+Shift+W 打开单词本
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
