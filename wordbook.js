@@ -144,6 +144,30 @@ function updateSyncStateUI() {
   }
 }
 
+// 同步成功后更新状态栏（常驻可见，弥补 toast 一闪而过）
+// verified：是否可验证写入成功（rest 可验证；adv-uri 不可验证，必须诚实标记「未验证」，绝不伪装成功）
+function markSynced(method, verified) {
+  const t = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+  const pill = document.getElementById('wb-sync-state');
+  if (pill) {
+    pill.textContent = `● 已同步 ${t}`;
+    pill.className = 'wb-sync-pill wb-sync-ok';
+  }
+  const obs = document.getElementById('wb-obs-status');
+  if (!obs) return;
+  if (method === 'rest' && verified) {
+    obs.textContent = '✓ 已写入 Glossary（REST）';
+    obs.className = 'wb-obs-status wb-obs-ok';
+  } else if (method === 'adv-uri') {
+    // adv-uri 无法验证是否真正写入：诚实标记「已尝试 / 未验证」，不伪装成功
+    obs.textContent = `↻ 已尝试写入 ${t}（adv-uri 未验证）`;
+    obs.className = 'wb-obs-status wb-obs-unknown';
+  } else {
+    obs.textContent = '📄 已导出文件';
+    obs.className = 'wb-obs-status wb-obs-unknown';
+  }
+}
+
 // 检测 Obsidian 连接状态（rest 可探测；adv-uri/file 标记未知）
 async function updateObsStatusUI() {
   const el = document.getElementById('wb-obs-status');
@@ -319,6 +343,7 @@ async function pushToGlossary(id) {
         : 'Obsidian 未响应，已下载文件，请放入 Glossary 文件夹');
     } else if (r.ok) {
       showToast(`已存为术语 → ${r.filename}`);
+      markSynced(r.method, !r.unverified);
     } else {
       showToast('保存失败：' + (r.reason || '未知错误'));
     }
@@ -368,6 +393,7 @@ async function exportAllGlossary() {
       needsSync = false;
       removeSyncBanner();
       updateSyncStateUI();
+      markSynced(result.method || 'adv-uri', !result.unverified);
       showToast(`已存为术语 ${result.exported} 条 → Glossary 文件夹`);
     } else {
       showToast('批量保存失败：' + (result?.reason || '未知错误'));
@@ -434,6 +460,7 @@ async function exportToObsidian() {
       needsSync = false;
       removeSyncBanner();
       updateSyncStateUI();
+      markSynced(result.method, !result.unverified);
     }
   } catch (e) {
     exportBtn.innerHTML = originalText;
