@@ -19,7 +19,7 @@
         <a class="wb-nav-item" data-tab="settings" id="wb-nav-settings">⚙ 设置</a>
       </nav>
       <div class="wb-sidebar-footer">
-        <span class="wb-version">v2.1.2</span>
+        <span class="wb-version">v2.1.3</span>
       </div>
     </aside>
 
@@ -37,13 +37,14 @@
             </select>
           </div>
           <div class="wb-toolbar-actions">
-            <button class="wb-btn wb-btn-export" id="wb-export-obsidian" title="全部存为术语到 Glossary">📑</button>
-            <button class="wb-btn wb-btn-export" id="wb-export-file" title="下载 Markdown">📥</button>
+            <button class="wb-btn wb-btn-sync" id="wb-export-obsidian" title="全部存为专业术语到 Glossary 文件夹">🔄 同步到 Obsidian</button>
+            <button class="wb-btn wb-btn-export" id="wb-export-file" title="下载 Markdown 文件">📥 导出文件</button>
           </div>
         </div>
 
         <div class="wb-stats" id="wb-stats">
           共 <strong id="wb-total">0</strong> 个单词
+          <span class="wb-sync-pill" id="wb-sync-state">—</span>
         </div>
 
         <div class="wb-list" id="wb-list">

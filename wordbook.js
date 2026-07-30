@@ -122,6 +122,25 @@ async function checkSyncStatus() {
   } catch (e) {
     needsSync = false;
   }
+  updateSyncStateUI();
+}
+
+// 同步状态药丸：常驻显示，避免「看不到同步信息」
+function updateSyncStateUI() {
+  const el = document.getElementById('wb-sync-state');
+  if (!el) return;
+  if (!allWords.length) {
+    el.textContent = '暂无单词';
+    el.className = 'wb-sync-pill wb-sync-neutral';
+    return;
+  }
+  if (needsSync) {
+    el.textContent = '● 待同步';
+    el.className = 'wb-sync-pill wb-sync-pending';
+  } else {
+    el.textContent = '● 已是最新';
+    el.className = 'wb-sync-pill wb-sync-ok';
+  }
 }
 
 // 显示同步提示横幅
@@ -144,6 +163,7 @@ function showSyncBanner() {
 
   document.getElementById('wb-sync-now-btn').addEventListener('click', exportToObsidian);
   document.getElementById('wb-sync-dismiss').addEventListener('click', () => banner.remove());
+  updateSyncStateUI();
 }
 
 // --- 渲染 ---
@@ -219,6 +239,7 @@ function renderWordList() {
       loadTags();
       needsSync = true;
       showSyncBanner();
+      updateSyncStateUI();
       showToast('已删除');
     });
   });
@@ -307,6 +328,9 @@ async function exportAllGlossary() {
     btn.innerHTML = originalText;
     btn.disabled = false;
     if (result && result.ok) {
+      needsSync = false;
+      removeSyncBanner();
+      updateSyncStateUI();
       showToast(`已存为术语 ${result.exported} 条${result.failed ? `（${result.failed} 条失败，已下载文件）` : ''} → Glossary 文件夹`);
     } else {
       showToast('批量保存失败：' + (result?.reason || '未知错误'));
@@ -366,6 +390,7 @@ async function exportToObsidian() {
       showToast(`已${methodText}导出 ${result.exported} 个单词到 Obsidian`);
       needsSync = false;
       removeSyncBanner();
+      updateSyncStateUI();
     }
   } catch (e) {
     exportBtn.innerHTML = originalText;
@@ -399,6 +424,7 @@ async function exportToFile() {
 function removeSyncBanner() {
   const banner = document.getElementById('wb-sync-banner');
   if (banner) banner.remove();
+  updateSyncStateUI();
 }
 
 // --- 连接测试 ---

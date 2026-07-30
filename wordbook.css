@@ -201,7 +201,18 @@ body {
   padding: 8px 12px;
   background: var(--wb-surface);
   border: 1px solid var(--wb-border);
-  font-size: 16px;
+  font-size: 13px;
+}
+
+.wb-btn-sync {
+  padding: 8px 14px;
+  background: var(--wb-accent);
+  color: #fff;
+  border: none;
+}
+
+.wb-btn-sync:hover {
+  background: var(--wb-accent-hover);
 }
 
 .wb-btn-export:hover {
@@ -256,6 +267,36 @@ body {
 .wb-stats strong {
   color: var(--wb-accent);
   font-size: 18px;
+}
+
+/* 同步状态药丸 */
+.wb-sync-pill {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 10px;
+  padding: 2px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  vertical-align: middle;
+}
+
+.wb-sync-pending {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.wb-sync-ok {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.wb-sync-neutral {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #e5e7eb;
 }
 
 /* 列表 */
