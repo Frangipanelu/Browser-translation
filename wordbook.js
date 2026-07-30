@@ -381,14 +381,16 @@ async function exportAllGlossary() {
     btn.disabled = false;
     if (result && result.fallbackFile) {
       // Obsidian 不可达或无法验证：自动下载合并的 .md 兜底
+      // 文件名里的 "/" 是本机文件系统非法字符，下载时归一化（仅影响本机文件名，不影响写进 Obsidian 的路径）
+      const dlName = (result.filename || 'Glossary.md').replace(/\//g, '_');
       if (result.combined && result.content) {
-        downloadContent(result.content, result.filename);
+        downloadContent(result.content, dlName);
       }
       needsSync = false;
       removeSyncBanner();
       updateSyncStateUI();
       const n = (result.exported || 0) + (result.failed || 0);
-      showToast(`Obsidian 未就绪，已下载 ${n} 条术语到 ${result.filename}，请放入仓库的 Glossary 文件夹`);
+      showToast(`Obsidian 未就绪，已下载 ${n} 条术语到 ${dlName}，请放入仓库的 Glossary 文件夹`);
     } else if (result && result.ok) {
       needsSync = false;
       removeSyncBanner();

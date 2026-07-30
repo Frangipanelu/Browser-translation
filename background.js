@@ -639,7 +639,7 @@ async function glossarySaveAll() {
         fallbackFile: true,
         combined: true,
         content: md,
-        filename: `Glossary-${new Date().toISOString().split('T')[0]}.md`,
+        filename: `Glossary/Glossary-${new Date().toISOString().split('T')[0]}.md`,
         reason: 'Local REST API 不可达，已生成合并文件兜底'
       };
     }
@@ -649,7 +649,7 @@ async function glossarySaveAll() {
   // 避免连续打开多个临时标签页导致 Advanced URI 插件冲突、页面乱弹、写入失败
   if (mechanism === 'adv-uri' && words.length > 1) {
     const today = new Date().toISOString().split('T')[0];
-    const filename = `Glossary-${today}.md`;
+    const filename = `Glossary/Glossary-${today}.md`;
     const combinedMd = words.map((w) => buildGlossaryContent(wordToGlossaryTerm(w, 'term'))).join('\n\n---\n\n');
 
     // 超长合并内容：URI 方式承载不了，直接生成合并文件兜底
@@ -712,8 +712,8 @@ async function glossarySaveAll() {
       failed: failCount,
       fallbackFile: true,
       combined: true,
-      content: fallbackParts.join('\n\n---\n\n'),
-      filename: `Glossary-${new Date().toISOString().split('T')[0]}.md`
+        content: fallbackParts.join('\n\n---\n\n'),
+        filename: `Glossary/Glossary-${new Date().toISOString().split('T')[0]}.md`
     };
   }
   return { ok: true, exported: okCount, failed: failCount };
@@ -746,8 +746,8 @@ chrome.commands.onCommand.addListener((command) => {
 
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
-    console.log('[WT] 划词翻译助手已安装 v2.1.11');
+    console.log('[WT] 划词翻译助手已安装 v2.1.12');
   } else if (details.reason === 'update') {
-    console.log('[WT] 划词翻译助手已更新到 v2.1.11');
+    console.log('[WT] 划词翻译助手已更新到 v2.1.12');
   }
 });
