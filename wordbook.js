@@ -28,7 +28,7 @@ async function init() {
 
   // 设置
   document.getElementById('wb-set-engine').addEventListener('change', onEngineChange);
-  document.getElementById('wb-set-mode').addEventListener('change', onModeChange);
+  document.getElementById('wb-set-mechanism').addEventListener('change', onModeChange);
   document.getElementById('wb-save-settings').addEventListener('click', saveSettings);
 
   // 连接测试
@@ -444,15 +444,16 @@ function onEngineChange() {
 }
 
 function onModeChange() {
-  const mode = document.getElementById('wb-set-mode').value;
+  const modeEl = document.getElementById('wb-set-mechanism');
+  const mode = modeEl ? modeEl.value : 'adv-uri';
   const hintMode = document.getElementById('wb-hint-mode');
   const hintSync = document.querySelector('.wb-hint-sync');
 
   if (mode === 'adv-uri') {
-    hintMode.style.display = '';
+    if (hintMode) hintMode.style.display = '';
     if (hintSync) hintSync.style.display = '';
   } else {
-    hintMode.style.display = 'none';
+    if (hintMode) hintMode.style.display = 'none';
     if (hintSync) hintSync.style.display = 'none';
   }
 }
@@ -461,10 +462,11 @@ async function saveSettings() {
   settings.engine = document.getElementById('wb-set-engine').value;
   settings.obsidianVault = document.getElementById('wb-set-vault').value.trim();
   settings.deeplKey = document.getElementById('wb-set-deepl-key').value.trim();
-  settings.obsidianMode = document.getElementById('wb-set-mode').value;
 
   const mechEl = document.getElementById('wb-set-mechanism');
-  if (mechEl) settings.obsidianMechanism = mechEl.value;
+  const mech = mechEl ? mechEl.value : 'adv-uri';
+  settings.obsidianMechanism = mech;
+  settings.obsidianMode = mech;
   const folderEl = document.getElementById('wb-set-folder');
   if (folderEl) settings.obsidianFolder = folderEl.value.trim() || 'Glossary';
   const keyEl = document.getElementById('wb-set-apikey');

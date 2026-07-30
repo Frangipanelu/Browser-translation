@@ -548,8 +548,8 @@ chrome.commands.onCommand.addListener((command) => {
 
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
-    console.log('[WT] 划词翻译助手已安装 v2.1.0');
+    console.log('[WT] 划词翻译助手已安装 v2.1.2');
   } else if (details.reason === 'update') {
-    console.log('[WT] 划词翻译助手已更新到 v2.1.0');
+    console.log('[WT] 划词翻译助手已更新到 v2.1.2');
   }
 });
