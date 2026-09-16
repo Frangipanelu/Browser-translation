@@ -392,6 +392,32 @@ body {
   font-style: italic;
 }
 
+/* 单词本里的发音按钮 */
+.wb-pron-btn {
+  all: unset;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-left: 4px;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 1;
+  vertical-align: middle;
+  transition: background 0.15s, transform 0.1s;
+  flex-shrink: 0;
+}
+
+.wb-pron-btn:hover {
+  background: #f0ecff;
+}
+
+.wb-pron-btn:active {
+  transform: scale(0.9);
+}
+
 .wb-word-definition {
   font-size: 12px;
   color: #888;

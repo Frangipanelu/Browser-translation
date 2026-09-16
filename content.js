@@ -13,6 +13,8 @@
   let dismissTimer = null;
   let currentDict = null;
   let currentLang = null; // 当前翻译方向（允许用户手动覆盖）
+  let currentAudio = null; // 当前正在播放的真人发音音频（用于打断上一次播放）
+  let currentAudioUrl = ''; // 当前词条的真人发音音频地址（词典接口返回，可能为空）
 
   // --- 初始化 ---
   init();
@@ -111,6 +113,8 @@
 
     const lang = detectLang(sel.text);
     currentLang = lang;
+    currentDict = null;
+    currentAudioUrl = '';
 
     const bubble = document.createElement('div');
     bubble.id = 'wt-bubble';
@@ -120,7 +124,7 @@
       <div class="wt-bubble-original">
         <span class="wt-original-text">${escapeHtml(sel.text)}</span>
         <span class="wt-phonetic" id="wt-phonetic" style="display:none"></span>
-        <button class="wt-btn wt-btn-speaker" id="wt-btn-speaker" title="发音" style="display:none">🔊</button>
+        <button class="wt-btn wt-btn-speaker" id="wt-btn-speaker" title="播放发音（真人音频优先，无音频时用系统语音）" style="display:none">🔊</button>
       </div>
       <div class="wt-bubble-divider"></div>
       <div class="wt-bubble-translated" id="wt-bubble-trans">
@@ -167,12 +171,14 @@
       fetchDictionaryViaBg(sel.text, bubble);
     }
 
-    // 发音按钮
+    // 发音按钮：英文原文直接常驻显示（TTS 不依赖网络，不该被词典接口成败卡住）
     const speakerBtn = bubble.querySelector('#wt-btn-speaker');
     if (speakerBtn) {
+      if (lang.source === 'en') speakerBtn.style.display = '';
       speakerBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        playTts(sel.text, currentLang.source);
+        // 按"原文实际语言"发音，避免手动切换翻译方向后读错语言
+        playTts(sel.text, detectLang(sel.text).source, currentAudioUrl);
       });
     }
   }
@@ -291,24 +297,59 @@
       }
 
       currentDict = { phonetic, definition, audioUrl };
+      // 真人发音音频：点 🔊 时优先播放它，没有才回退系统 TTS
+      currentAudioUrl = audioUrl || '';
     } catch (e) {
-      // 词典查询失败静默处理
+      // 词典查询失败静默处理（发音按钮已常驻，仍可用系统 TTS 朗读）
     }
   }
 
-  // --- TTS 发音 ---
-  function playTts(text, sourceLang) {
-    window.speechSynthesis.cancel();
+  // --- 发音：优先播放词典真人音频，无音频或播放失败时回退系统 TTS ---
+  function stopCurrentAudio() {
+    if (currentAudio) {
+      try {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+      } catch (e) { /* 忽略 */ }
+      currentAudio = null;
+    }
+  }
 
+  function playTts(text, sourceLang, audioUrl) {
+    // 打断上一次播放（语音 + 音频），避免叠音
+    try { window.speechSynthesis.cancel(); } catch (e) { /* 忽略 */ }
+    stopCurrentAudio();
+
+    if (audioUrl) {
+      try {
+        const audio = new Audio(audioUrl);
+        currentAudio = audio;
+        audio.onerror = () => speakWithTts(text, sourceLang);
+        audio.play().catch(() => speakWithTts(text, sourceLang));
+        return;
+      } catch (e) {
+        // 音频不可用（如页面 CSP 拦截媒体），继续走 TTS
+      }
+    }
+    speakWithTts(text, sourceLang);
+  }
+
+  function speakWithTts(text, sourceLang) {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = sourceLang === 'zh-CN' ? 'zh-CN' : 'en-US';
     utterance.rate = 0.9;
     utterance.volume = 0.85;
 
-    const voices = window.speechSynthesis.getVoices();
-    if (voices.length) {
-      const match = voices.find((v) => v.lang.startsWith(utterance.lang));
+    // 部分浏览器首次 getVoices() 返回空，需等 voiceschanged 后再取
+    const pickVoice = () => {
+      const voices = window.speechSynthesis.getVoices() || [];
+      const match = voices.find((v) => v.lang && v.lang.replace('_', '-').startsWith(utterance.lang));
       if (match) utterance.voice = match;
+    };
+
+    pickVoice();
+    if (!utterance.voice) {
+      window.speechSynthesis.addEventListener('voiceschanged', pickVoice, { once: true });
     }
 
     window.speechSynthesis.speak(utterance);
@@ -437,6 +478,8 @@
     }
     currentDict = null;
     currentLang = null;
+    currentAudioUrl = '';
+    stopCurrentAudio();
   }
 
   // --- 工具函数 ---

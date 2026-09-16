@@ -257,6 +257,7 @@ function renderWordList() {
             <div class="wb-word-original">
               ${escapeHtml(w.original)}
               ${w.phonetic ? `<span class="wb-word-phonetic">${escapeHtml(w.phonetic)}</span>` : ''}
+              <button class="wb-pron-btn" data-text="${escapeAttr(w.original)}" title="播放发音">🔊</button>
             </div>
             ${w.definition ? `<div class="wb-word-definition">${escapeHtml(w.definition)}</div>` : ''}
             <div class="wb-word-translated">${escapeHtml(w.translated)}</div>
@@ -290,6 +291,13 @@ function renderWordList() {
       showSyncBanner();
       updateSyncStateUI();
       showToast('已删除');
+    });
+  });
+
+  list.querySelectorAll('.wb-pron-btn').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      speakWord(btn.dataset.text);
     });
   });
 
@@ -611,6 +619,37 @@ function debounce(fn, delay) {
     clearTimeout(timer);
     timer = setTimeout(() => fn(...args), delay);
   };
+}
+
+// --- 单词本发音（Web Speech API，无需联网） ---
+function speakWord(text) {
+  if (!text) return;
+  if (!window.speechSynthesis) {
+    showToast('当前浏览器不支持语音朗读');
+    return;
+  }
+  try {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    // 含中文按中文读，否则按英文读
+    utterance.lang = /[\u4e00-\u9fa5]/.test(text) ? 'zh-CN' : 'en-US';
+    utterance.rate = 0.9;
+    utterance.volume = 0.85;
+
+    const pickVoice = () => {
+      const voices = window.speechSynthesis.getVoices() || [];
+      const match = voices.find((v) => v.lang && v.lang.replace('_', '-').startsWith(utterance.lang));
+      if (match) utterance.voice = match;
+    };
+    pickVoice();
+    if (!utterance.voice) {
+      window.speechSynthesis.addEventListener('voiceschanged', pickVoice, { once: true });
+    }
+
+    window.speechSynthesis.speak(utterance);
+  } catch (e) {
+    showToast('发音失败：' + (e.message || '未知错误'));
+  }
 }
 
 function showToast(msg) {
