@@ -1,6 +1,6 @@
 {
   "name": "word-translator-extension",
-  "version": "2.1.1",
+  "version": "2.0",
   "private": true,
   "description": "划词翻译助手 - 轻量内联查词 + 专业术语积累（Obsidian 术语表）",
   "scripts": {

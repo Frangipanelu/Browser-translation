@@ -6,8 +6,8 @@
 
 ## 版本
 
-- **v2.1.0（当前）**：新增 Obsidian 术语表（Glossary，一词一文件 + Dataview 可查询）；自动采集「原句语境」与「出处」；单词本收藏聚焦「存为术语」。
-- v2.0.0：多引擎备用、手动方向切换、消除开发者模式警告、Obsidian 同步修复。
+- **v2.0（当前）**：新增 Obsidian 术语表（Glossary，一词一文件 + Dataview 可查询）；自动采集「原句语境」与「出处」；单词本收藏聚焦「存为术语」；恢复并增强发音功能（真人音频优先 + 系统 TTS 兜底）。
+- v1.0.0：早期版本（多引擎备用、手动方向切换、消除开发者模式警告、Obsidian 同步修复），历史代码已备份为 git tag `backup-v1.0.0`。
 
 ## 功能特性
 
@@ -121,7 +121,7 @@ created: 2026-07-30
 
 ```
 word-translator-extension/
-├── manifest.json          # 扩展配置 (v2.1.0)
+├── manifest.json          # 扩展配置 (v2.0)
 ├── background.js           # Service Worker（翻译引擎+词典+存储+术语表写入）
 ├── content.js             # 页面注入（划词+气泡+原句语境采集）
 ├── content.css            # 气泡样式

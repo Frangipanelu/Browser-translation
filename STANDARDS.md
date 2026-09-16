@@ -96,8 +96,10 @@ popup.js    ──┘        │
 
 - 每个发布版本打 annotated tag：`vX.Y.Z`。
 - `v2.1.0` = 重构前基线（可一键回到「能用」状态）。
-- `v2.1.1` = 当前「纯函数 + 测试」稳定版。
+- `v2.1.1` = 重构后「纯函数 + 测试」稳定版。
+- `v2.0` = 当前对外发布版本（版本号统一为 2.0，与 `manifest.json` / `package.json` 保持一致）。
 - 补丁修复后递增 Z；新增能力递增 Y；破坏性变更递增 X，并在 README 记录迁移。
+- **版本号单一事实来源**：`manifest.json` 的 `version` 为准，`package.json`、UI 展示（`#wb-version` 动态读取 manifest）、文档说明必须同步，禁止写死。
 
 ### 3.2 回滚操作（推荐：`git revert`）
 

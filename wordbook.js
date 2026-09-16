@@ -13,6 +13,17 @@ async function init() {
     currentTab = 'settings';
   }
 
+  // 版本号：以 manifest 为准，避免 UI 与 manifest 长期漂移
+  const versionEl = document.getElementById('wb-version');
+  if (versionEl) {
+    try {
+      const v = chrome.runtime.getManifest().version;
+      if (v) versionEl.textContent = `v${v}`;
+    } catch (e) {
+      /* 保留 HTML 中的静态兜底值 */
+    }
+  }
+
   // 导航
   document.querySelectorAll('.wb-nav-item').forEach((item) => {
     item.addEventListener('click', () => switchTab(item.dataset.tab));
